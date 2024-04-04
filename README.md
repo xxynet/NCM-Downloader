@@ -3,6 +3,15 @@ A powerful NCM Downloader that supports built-in metadata (title, artists, album
 
 一个强大的网易云下载工具，支持内嵌元信息（歌曲名，歌手，专辑，歌曲封面），暂时只支持下载歌单
 
+## ScreenShots
+![](./Screenshot01.png)
+
+![](./Screenshot02.png)
+
+![](./Screenshot03.png)
+
+![](./Screenshot04.png)
+
 ## Usage
 Clone this project
 
@@ -23,3 +32,6 @@ filename = 0
 ```
 
 Run ```main.py``` and input your playlist ID
+
+
+For executable files, please access to [Releases](https://github.com/xxynet/NCM-Downloader/releases)
