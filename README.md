@@ -12,6 +12,12 @@ A powerful NCM Downloader that supports built-in metadata (title, artists, album
 
 ![](./Screenshot04.png)
 
+v1.1.0及以上支持下载歌词，使用支持读取歌词文件的播放器打开即可（图为Dopamine）：
+
+![](./Screenshot05.png)
+
+![](./Screenshot06.png)
+
 ## Usage
 Clone this project
 
@@ -29,6 +35,9 @@ path =
 
 #0->歌名-歌手 1->歌手-歌名 2->歌名（暂时无效）
 filename = 0
+
+#是否下载歌词 1 -> True  0 -> False
+lrc = 1
 ```
 
 Run ```main.py``` and input your playlist ID
@@ -37,7 +46,7 @@ Run ```main.py``` and input your playlist ID
 For executable files, please access to [Releases](https://github.com/xxynet/NCM-Downloader/releases)
 
 ## Q&A
-> Q: 提示“获取歌曲数量异常，请重新运行本程序”
+> Q: 提示“获取歌曲信息异常，请重新运行本程序”
 
 A: 网易云服务器繁忙，可以再试几次，若仍然无法下载，请等待一会儿再试
 

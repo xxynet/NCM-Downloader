@@ -18,6 +18,8 @@ try:
     if path == '':
         path = os.getcwd()
     filename = config.get('output','filename')
+
+    bool_lrc = config.get('output', 'lrc')
 except:
     print("未检测到config.ini文件")
     time.sleep(3)
@@ -37,16 +39,22 @@ headers = {
 def MusicDown(Playlist_name,id,name,artists):
     try:
         data = requests.get('https://music.163.com/song/media/outer/url?id=' + str(id), headers=headers)
+        lrc = requests.get('https://music.163.com/api/song/lyric?id='+str(id)+'&lv=1&kv=1&tv=-1')
+        lrc = jsonpath.jsonpath(lrc.json(), "$.lrc.lyric")[0]
     except:
         print("获取歌曲音频失败！")
 
     try:
         with open(path + "\\" + Playlist_name + "\\" + name + " - " + artists + ".mp3", "wb") as file:
             file.write(data.content)
+
+        if bool_lrc == '1':
+            with open(path + "\\" + Playlist_name + "\\" + name + " - " + artists + ".lrc", "w") as file:
+                file.write(lrc)
+
+        print(name + " - " + artists + ".mp3  " + "download completed")
     except:
         print(name+" - "+artists+".mp3  "+"download failed")
-
-    print(name+" - "+artists+".mp3  "+"download completed")
 
 
 
@@ -57,7 +65,7 @@ if response.status_code == 200:
     try:
         amount = len(jsonpath.jsonpath(data, "$.[tracks]")[0])
     except:
-        print("获取歌曲数量异常，请重新运行本程序")
+        print("获取歌曲信息异常，请重新运行本程序")
         print(data)
         time.sleep(3)
         sys.exit(1)
