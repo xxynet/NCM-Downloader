@@ -35,3 +35,16 @@ Run ```main.py``` and input your playlist ID
 
 
 For executable files, please access to [Releases](https://github.com/xxynet/NCM-Downloader/releases)
+
+## Q&A
+> Q: 提示“获取歌曲数量异常，请重新运行本程序”
+
+A: 网易云服务器繁忙，可以再试几次，若仍然无法下载，请等待一会儿再试
+
+> Q: 如何获取歌单ID？
+
+A: 使用网页版打开想要下载的歌单（必须是公开的歌单），复制链接中```?id=```后面的数字
+
+```
+https://music.163.com/#/playlist?id=歌单ID
+```
