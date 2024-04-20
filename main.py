@@ -11,6 +11,23 @@ import time
 import configparser
 import metadata
 
+config_file = '''[output]
+
+#设置歌单输出路径，如果为空则默认为程序所在目录（路径无需引号包裹）
+path = 
+
+#0->歌名-歌手 1->歌手-歌名 2->歌名（暂时无效）
+filename = 0
+
+#是否下载歌词 1 -> True  0 -> False
+lrc = 0
+'''
+
+if not os.path.exists('config.ini'):
+    with open("config.ini", "w", encoding="utf-8") as config:
+        config.write(config_file)
+    print("首次运行，已自动创建config.in文件")
+
 try:
     config = configparser.ConfigParser()
     config.read('config.ini',encoding='utf-8')
@@ -21,7 +38,7 @@ try:
 
     bool_lrc = config.get('output', 'lrc')
 except:
-    print("未检测到config.ini文件")
+    print("读取config.ini文件失败")
     time.sleep(3)
     sys.exit(1)
 
@@ -87,13 +104,22 @@ if response.status_code == 200:
     for i in range(amount):
         name = jsonpath.jsonpath(data, "$.[tracks]["+str(i)+"]['name']")[0]
         id = jsonpath.jsonpath(data, "$.[tracks]["+str(i)+"]['id']")[0]
-        artists = jsonpath.jsonpath(data, "$.[tracks]["+str(i)+"]['artists'][0]['name']")[0]
+        artists_info = jsonpath.jsonpath(data, "$.[tracks]["+str(i)+"]['artists']")[0]
+        artists_num = len(artists_info)
+        artists_list = []
+        artists = ''
+        for j in range(artists_num):
+            artist_name = jsonpath.jsonpath(data, "$.[tracks]["+str(i)+"]['artists']["+str(j)+"]['name']")[0]
+            artists_list.append(artist_name)
+            artists+=artist_name+","
+        artists = artists[:-1]
+
         cover = jsonpath.jsonpath(data, "$.[tracks]["+str(i)+"]['album']['picUrl']")[0]
         album = jsonpath.jsonpath(data, "$.[tracks]["+str(i)+"][album][name]")[0]
         full_path = path + "\\" + Playlist_name + "\\" + name + " - " + artists + ".mp3"
         if not os.path.exists(full_path):
             MusicDown(Playlist_name,id, name, artists)
-            metadata.MetaData(full_path, name, artists, album, cover)
+            metadata.MetaData(full_path, name, artists_list, album, cover)
         else:
             print(name+" - "+artists+".mp3  "+"already exist")
 
