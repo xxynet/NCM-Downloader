@@ -1,4 +1,6 @@
 # NCM Downloader
+#Author: Caleb@xxynet
+
 #请打开config.ini配置文件配置相应信息
 
 #pyinstaller -F main.py -i music.ico
