@@ -58,14 +58,18 @@ headers = {
 def MusicDown(Playlist_name,id,name,artists):
     try:
         data = requests.get('https://music.163.com/song/media/outer/url?id=' + str(id), headers=headers)
+        content_type = data.headers.get('Content-Type')
         lrc = requests.get('https://music.163.com/api/song/lyric?id='+str(id)+'&lv=1&kv=1&tv=-1')
         lrc = jsonpath.jsonpath(lrc.json(), "$.lrc.lyric")[0]
     except:
         print("获取歌曲音频失败！")
 
     try:
-        with open(path + "\\" + Playlist_name + "\\" + name + " - " + artists + ".mp3", "wb") as file:
-            file.write(data.content)
+        if not "text/html" in content_type:
+            with open(path + "\\" + Playlist_name + "\\" + name + " - " + artists + ".mp3", "wb") as file:
+                file.write(data.content)
+        else:
+            print(name + " - " + artists + ".mp3  " + "download failed")
 
         if bool_lrc == '1':
             with open(path + "\\" + Playlist_name + "\\" + name + " - " + artists + ".lrc", "w") as file:
@@ -121,7 +125,8 @@ if response.status_code == 200:
         full_path = path + "\\" + Playlist_name + "\\" + name + " - " + artists + ".mp3"
         if not os.path.exists(full_path):
             MusicDown(Playlist_name,id, name, artists)
-            metadata.MetaData(full_path, name, artists_list, album, cover)
+            if os.path.exists(full_path):
+                metadata.MetaData(full_path, name, artists_list, album, cover)
         else:
             print(name+" - "+artists+".mp3  "+"already exist")
 
