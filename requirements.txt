@@ -1,0 +1,4 @@
+colorama==0.4.6
+jsonpath==0.82
+mutagen==1.47.0
+Requests==2.31.0

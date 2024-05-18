@@ -25,6 +25,12 @@ Clone this project
 git clone https://github.com/xxynet/NCM-Downloader.git
 ```
 
+Install requirements
+
+```
+pip install -r requirements.txt
+```
+
 Edit ```config.ini```
 
 ```
@@ -37,7 +43,10 @@ path =
 filename = 0
 
 #是否下载歌词 1 -> True  0 -> False
-lrc = 1
+lrc = 0
+
+[auth]
+cookie = 
 ```
 
 Run ```main.py``` and input your playlist ID
@@ -46,6 +55,12 @@ Run ```main.py``` and input your playlist ID
 For executable files, please access to [Releases](https://github.com/xxynet/NCM-Downloader/releases)
 
 ## Q&A
+> Q: 为什么要配置Cookie，如何配置Cookie？
+
+A: 由于网易云API调整，未登录用户只能获取歌单前10首歌曲，配置Cookie后可以获取完整歌单信息。
+
+首先访问[网易云官网](https://music.163.com/)，按键盘上的F12，打开DevTools，切换到Network（网络）选项卡，按键盘上的Ctrl+R刷新，随便点一个项目（如music.163.com），在Headers（标头）中下拉，找到Request Headers（请求标头）中的Cookie，复制右侧的值，填入配置文件即可。
+
 > Q: 提示“获取歌曲信息异常，请重新运行本程序”
 
 A: 网易云服务器繁忙，可以再试几次，若仍然无法下载，请等待一会儿再试
