@@ -11,6 +11,7 @@ import os
 import sys
 import time
 import configparser
+from colorama import init, Fore, Style
 import metadata
 
 config_file = '''[output]
@@ -23,7 +24,12 @@ filename = 0
 
 #是否下载歌词 1 -> True  0 -> False
 lrc = 0
+
+[auth]
+cookie = 
 '''
+
+init() # colorma
 
 if not os.path.exists('config.ini'):
     with open("config.ini", "w", encoding="utf-8") as config:
@@ -31,15 +37,19 @@ if not os.path.exists('config.ini'):
     print("首次运行，已自动创建config.in文件")
 
 try:
-    config = configparser.ConfigParser()
+    config = configparser.RawConfigParser()
     config.read('config.ini',encoding='utf-8')
-    path = config.get('output', 'path')
+    path = config.get('output','path')
     if path == '':
         path = os.getcwd()
     filename = config.get('output','filename')
 
-    bool_lrc = config.get('output', 'lrc')
-except:
+    bool_lrc = config.get('output','lrc')
+
+    cookie = config.get('auth','cookie')
+
+except Exception as e:
+    print(e)
     print("读取config.ini文件失败")
     time.sleep(3)
     sys.exit(1)
@@ -52,10 +62,14 @@ except:
     sys.exit(1)
 
 headers = {
-    'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.67'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.67',
+    'Cookie': cookie,
+    'Origin': 'https://music.163.com/',
+    'Referer': 'https://music.163.com/'
 }
 
 def MusicDown(Playlist_name,id,name,artists):
+    print("Downloading " + name + " - " + artists + ".mp3", end='\r')
     try:
         data = requests.get('https://music.163.com/song/media/outer/url?id=' + str(id), headers=headers)
         content_type = data.headers.get('Content-Type')
@@ -69,15 +83,14 @@ def MusicDown(Playlist_name,id,name,artists):
             with open(path + "\\" + Playlist_name + "\\" + name + " - " + artists + ".mp3", "wb") as file:
                 file.write(data.content)
         else:
-            print(name + " - " + artists + ".mp3  " + "download failed")
-
+            print(Fore.RED+ "Failed " + Style.RESET_ALL + name + " - " + artists + ".mp3")
         if bool_lrc == '1':
             with open(path + "\\" + Playlist_name + "\\" + name + " - " + artists + ".lrc", "w") as file:
                 file.write(lrc)
 
-        print(name + " - " + artists + ".mp3  " + "download completed")
+        print(Fore.GREEN + "Done " + Style.RESET_ALL + name + " - " + artists + ".mp3")
     except:
-        print(name+" - "+artists+".mp3  "+"download failed")
+        print(Fore.RED+ "Failed " + Style.RESET_ALL + name + " - " + artists + ".mp3")
 
 
 
