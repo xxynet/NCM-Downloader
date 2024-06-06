@@ -24,9 +24,6 @@ filename = 0
 
 #是否下载歌词 1 -> True  0 -> False
 lrc = 0
-
-[auth]
-cookie = 
 '''
 
 init() # colorma
@@ -35,6 +32,10 @@ if not os.path.exists('config.ini'):
     with open("config.ini", "w", encoding="utf-8") as config:
         config.write(config_file)
     print("首次运行，已自动创建config.in文件")
+if not os.path.exists('cookie.txt'):
+    with open("cookie.txt", "w", encoding="utf-8") as cookie_value:
+        cookie_value.write("")
+    print("首次运行，已自动创建cookie.txt文件")
 
 try:
     config = configparser.RawConfigParser()
@@ -46,11 +47,12 @@ try:
 
     bool_lrc = config.get('output','lrc')
 
-    cookie = config.get('auth','cookie')
+    with open("cookie.txt", "r") as cookie_file:
+        cookie = cookie_file.read()
 
 except Exception as e:
     print(e)
-    print("读取config.ini文件失败")
+    print("读取配置文件失败")
     time.sleep(3)
     sys.exit(1)
 
@@ -80,12 +82,12 @@ def MusicDown(Playlist_name,id,name,artists):
 
     try:
         if not "text/html" in content_type:
-            with open(path + "\\" + Playlist_name + "\\" + name + " - " + artists + ".mp3", "wb") as file:
+            with open(path + "/" + Playlist_name + "/" + name + " - " + artists + ".mp3", "wb") as file:
                 file.write(data.content)
         else:
             print(Fore.RED+ "Failed " + Style.RESET_ALL + name + " - " + artists + ".mp3")
         if bool_lrc == '1':
-            with open(path + "\\" + Playlist_name + "\\" + name + " - " + artists + ".lrc", "w") as file:
+            with open(path + "/" + Playlist_name + "/" + name + " - " + artists + ".lrc", "w") as file:
                 file.write(lrc)
 
         print(Fore.GREEN + "Done " + Style.RESET_ALL + name + " - " + artists + ".mp3")
@@ -113,8 +115,8 @@ if response.status_code == 200:
         time.sleep(3)
         sys.exit(1)
     try:
-        if not os.path.exists(path + "\\" + Playlist_name):
-            os.mkdir(path + "\\" + Playlist_name)
+        if not os.path.exists(path + "/" + Playlist_name):
+            os.mkdir(path + "/" + Playlist_name)
     except:
         print("创建歌单文件夹失败!")
         time.sleep(3)
@@ -135,7 +137,7 @@ if response.status_code == 200:
 
         cover = jsonpath.jsonpath(data, "$.[tracks]["+str(i)+"]['album']['picUrl']")[0]
         album = jsonpath.jsonpath(data, "$.[tracks]["+str(i)+"][album][name]")[0]
-        full_path = path + "\\" + Playlist_name + "\\" + name + " - " + artists + ".mp3"
+        full_path = path + "/" + Playlist_name + "/" + name + " - " + artists + ".mp3"
         if not os.path.exists(full_path):
             MusicDown(Playlist_name,id, name, artists)
             if os.path.exists(full_path):
