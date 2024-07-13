@@ -22,7 +22,7 @@ path =
 #0->歌名-歌手 1->歌手-歌名 2->歌名（暂时无效）
 filename = 0
 
-#是否下载歌词 1 -> True  0 -> False
+#是否下载歌词 1 -> 下载LRC歌词文件  2 -> 内嵌歌词  0 -> False
 lrc = 0
 '''
 
@@ -70,29 +70,33 @@ headers = {
     'Referer': 'https://music.163.com/'
 }
 
+
 def MusicDown(Playlist_name,id,name,artists):
+    global olyric, tlyric, content_type
     print("Downloading " + name + " - " + artists + ".mp3", end='\r')
     try:
-        data = requests.get('https://music.163.com/song/media/outer/url?id=' + str(id), headers=headers)
-        content_type = data.headers.get('Content-Type')
+        audio_data = requests.get('https://music.163.com/song/media/outer/url?id=' + str(id), headers=headers)
+        content_type = audio_data.headers.get('Content-Type')
         lrc = requests.get('https://music.163.com/api/song/lyric?id='+str(id)+'&lv=1&kv=1&tv=-1')
-        lrc = jsonpath.jsonpath(lrc.json(), "$.lrc.lyric")[0]
-    except:
-        print("获取歌曲音频失败！")
+        olyric = jsonpath.jsonpath(lrc.json(), "$.lrc.lyric")[0]
+        tlyric = jsonpath.jsonpath(lrc.json(), "$.tlyric.lyric")[0]
+    except Exception as e:
+        print("出现异常：" + str(e))
 
-    try:
-        if not "text/html" in content_type:
-            with open(path + "/" + Playlist_name + "/" + name + " - " + artists + ".mp3", "wb") as file:
-                file.write(data.content)
-        else:
-            print(Fore.RED+ "Failed " + Style.RESET_ALL + name + " - " + artists + ".mp3")
-        if bool_lrc == '1':
-            with open(path + "/" + Playlist_name + "/" + name + " - " + artists + ".lrc", "w") as file:
-                file.write(lrc)
+    if "text/html" not in content_type:
+        with open(path + "/" + Playlist_name + "/" + name + " - " + artists + ".mp3", "wb") as file:
+            file.write(audio_data.content)
+        print("[" + Fore.GREEN + "OK" + Style.RESET_ALL + "] " + name + " - " + artists + ".mp3")
+    else:  # VIP
+        print("[" + Fore.RED + "E" + Style.RESET_ALL + "] " + name + " - " + artists + ".mp3")
+    if bool_lrc == '1':
+        merged_lrc = metadata.merge_lrc(olyric, tlyric)
+        with open(path + "/" + Playlist_name + "/" + name + " - " + artists + ".lrc", "w", encoding='utf-8') as file:
+            file.write(merged_lrc)
+    elif bool_lrc == '2' and (not "text/html" in content_type):
+        merged_lrc = metadata.merge_lrc(olyric, tlyric)
+        metadata.builtin_lyrics(path + "/" + Playlist_name + "/" + name + " - " + artists + ".mp3", merged_lrc)
 
-        print(Fore.GREEN + "Done " + Style.RESET_ALL + name + " - " + artists + ".mp3")
-    except:
-        print(Fore.RED+ "Failed " + Style.RESET_ALL + name + " - " + artists + ".mp3")
 
 
 
@@ -104,7 +108,6 @@ if response.status_code == 200:
         amount = len(jsonpath.jsonpath(data, "$.[tracks]")[0])
     except:
         print("获取歌曲信息异常，请重新运行本程序")
-        print(data)
         time.sleep(3)
         sys.exit(1)
 
@@ -114,6 +117,7 @@ if response.status_code == 200:
         print("获取歌单名称失败！")
         time.sleep(3)
         sys.exit(1)
+
     try:
         if not os.path.exists(path + "/" + Playlist_name):
             os.mkdir(path + "/" + Playlist_name)
