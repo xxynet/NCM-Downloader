@@ -4,7 +4,11 @@ A powerful NCM Downloader that supports built-in metadata (title, artists, album
 一个强大的网易云下载工具，支持内嵌元信息（歌曲名，歌手，专辑，歌曲封面），暂时只支持下载歌单
 
 ## 📷 ScreenShots
-![](./Screenshot01.png)
+![](./Screenshot01-1.png)
+
+新版样式（v1.5.0及以上）：
+
+![](./Screenshot01-2.png)
 
 ![](./Screenshot02.png)
 
