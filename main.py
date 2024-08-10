@@ -1,9 +1,9 @@
 # NCM Downloader
-#Author: Caleb@xxynet
+# Author: Caleb@xxynet
 
-#请打开config.ini配置文件配置相应信息
+# 请打开config.ini配置文件配置相应信息
 
-#pyinstaller -F main.py -i music.ico
+# pyinstaller -F main.py -i music.ico
 
 import requests
 import jsonpath
@@ -27,6 +27,7 @@ lrc = 0
 '''
 
 init() # colorma
+
 
 if not os.path.exists('config.ini'):
     with open("config.ini", "w", encoding="utf-8") as config:
@@ -56,103 +57,137 @@ except Exception as e:
     time.sleep(3)
     sys.exit(1)
 
-try:
-    Playlist_id = int(input("歌单id："))
-except:
-    print("非法输入！")
-    time.sleep(3)
-    sys.exit(1)
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.67',
-    'Cookie': cookie,
-    'Origin': 'https://music.163.com/',
-    'Referer': 'https://music.163.com/'
-}
+# class Song:
+#     def __init__(self, name, id, artists, url, cover, album, lyrics=None):
+#         self.name = name
+#         self.track_id = id
+#         self.artists = artists
+#         self.url = url
+#         self.cover = cover
+#         self.album = album
+#         self.lyrics = lyrics
 
 
-def MusicDown(Playlist_name,id,name,artists):
-    global olyric, tlyric, content_type
-    print("Downloading " + name + " - " + artists + ".mp3", end='\r')
-    try:
-        audio_data = requests.get('https://music.163.com/song/media/outer/url?id=' + str(id), headers=headers)
-        content_type = audio_data.headers.get('Content-Type')
-        lrc = requests.get('https://music.163.com/api/song/lyric?id='+str(id)+'&lv=1&kv=1&tv=-1')
-        olyric = jsonpath.jsonpath(lrc.json(), "$.lrc.lyric")[0]
-        tlyric = jsonpath.jsonpath(lrc.json(), "$.tlyric.lyric")[0]
-    except Exception as e:
-        print("出现异常：" + str(e))
+class Playlist:
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.67',
+        'Cookie': cookie,
+        'Origin': 'https://music.163.com/',
+        'Referer': 'https://music.163.com/'
+    }
 
-    if "text/html" not in content_type:
-        with open(path + "/" + Playlist_name + "/" + name + " - " + artists + ".mp3", "wb") as file:
-            file.write(audio_data.content)
-        print("[" + Fore.GREEN + "OK" + Style.RESET_ALL + "] " + name + " - " + artists + ".mp3")
-    else:  # VIP
-        print("[" + Fore.RED + "E" + Style.RESET_ALL + "] " + name + " - " + artists + ".mp3")
-    if bool_lrc == '1':
-        merged_lrc = metadata.merge_lrc(olyric, tlyric)
-        with open(path + "/" + Playlist_name + "/" + name + " - " + artists + ".lrc", "w", encoding='utf-8') as file:
-            file.write(merged_lrc)
-    elif bool_lrc == '2' and (not "text/html" in content_type):
-        merged_lrc = metadata.merge_lrc(olyric, tlyric)
-        metadata.builtin_lyrics(path + "/" + Playlist_name + "/" + name + " - " + artists + ".mp3", merged_lrc)
+    def __init__(self, playlist_id, download_path):
+        self.playlist_id = playlist_id
+        self.download_path = download_path
+        self.playlist_name = None
+        self.playlist_song_amount = None
+        self.tracks = []
 
+    def fetch_playlist_data(self):
 
+        response = requests.get("https://music.163.com/api/playlist/detail?id=" + str(self.playlist_id), headers=self.headers)
 
+        if response.ok:
+            data = response.json()
+            try:
+                self.tracks = jsonpath.jsonpath(data, "$.[tracks]")[0]
+                self.playlist_song_amount = len(self.tracks)
+            except:
+                print("获取歌曲信息异常，请重新运行本程序")
+                time.sleep(3)
+                sys.exit(1)
 
-response = requests.get("https://music.163.com/api/playlist/detail?id="+str(Playlist_id),headers=headers)
+            try:
+                self.playlist_name = jsonpath.jsonpath(data, "$.['name']")[0]
+            except:
+                print("获取歌单名称失败！")
+                time.sleep(3)
+                sys.exit(1)
+        else:
+            print("请求失败！")
+            sys.exit(1)
 
-if response.status_code == 200:
-    data = response.json()
-    try:
-        amount = len(jsonpath.jsonpath(data, "$.[tracks]")[0])
-    except:
-        print("获取歌曲信息异常，请重新运行本程序")
-        time.sleep(3)
-        sys.exit(1)
+    def create_playlist_dir(self):
+        try:
+            if not os.path.exists(self.download_path + "/" + self.playlist_name):
+                os.mkdir(path + "/" + self.playlist_name)
+        except:
+            print("创建歌单文件夹失败!")
+            time.sleep(3)
+            sys.exit(1)
 
-    try:
-        Playlist_name = jsonpath.jsonpath(data, "$.['name']")[0]
-    except:
-        print("获取歌单名称失败！")
-        time.sleep(3)
-        sys.exit(1)
+    def MusicDown(self, id, name, artists):
+        global olyric, tlyric, content_type
+        print("Downloading " + name + " - " + artists + ".mp3", end='\r')
+        try:
+            audio_data = requests.get('https://music.163.com/song/media/outer/url?id=' + str(id), headers=self.headers)
+            content_type = audio_data.headers.get('Content-Type')
+            lrc = requests.get('https://music.163.com/api/song/lyric?id=' + str(id) + '&lv=1&kv=1&tv=-1')
+            olyric = jsonpath.jsonpath(lrc.json(), "$.lrc.lyric")[0]
+            tlyric = jsonpath.jsonpath(lrc.json(), "$.tlyric.lyric")[0]
+        except Exception as e:
+            print("出现异常：" + str(e))
 
-    try:
-        if not os.path.exists(path + "/" + Playlist_name):
-            os.mkdir(path + "/" + Playlist_name)
-    except:
-        print("创建歌单文件夹失败!")
-        time.sleep(3)
-        sys.exit(1)
+        if "text/html" not in content_type:
+            with open(path + "/" + self.playlist_name + "/" + name + " - " + artists + ".mp3", "wb") as file:
+                file.write(audio_data.content)
+            print("[" + Fore.GREEN + "OK" + Style.RESET_ALL + "] " + name + " - " + artists + ".mp3")
+        else:  # VIP
+            print("[" + Fore.RED + "E" + Style.RESET_ALL + "] " + name + " - " + artists + ".mp3")
+        if bool_lrc == '1':
+            merged_lrc = metadata.merge_lrc(olyric, tlyric)
+            with open(path + "/" + self.playlist_name + "/" + name + " - " + artists + ".lrc", "w",
+                      encoding='utf-8') as file:
+                file.write(merged_lrc)
+        elif bool_lrc == '2' and (not "text/html" in content_type):
+            merged_lrc = metadata.merge_lrc(olyric, tlyric)
+            metadata.builtin_lyrics(path + "/" + self.playlist_name + "/" + name + " - " + artists + ".mp3", merged_lrc)
 
-    for i in range(amount):
-        name = jsonpath.jsonpath(data, "$.[tracks]["+str(i)+"]['name']")[0]
-        id = jsonpath.jsonpath(data, "$.[tracks]["+str(i)+"]['id']")[0]
-        artists_info = jsonpath.jsonpath(data, "$.[tracks]["+str(i)+"]['artists']")[0]
+    def download_music(self, index):
+        name = jsonpath.jsonpath(self.tracks[index], "$['name']")[0]
+        id = jsonpath.jsonpath(self.tracks[index], "$['id']")[0]
+        artists_info = jsonpath.jsonpath(self.tracks[index], "$['artists']")[0]
         artists_num = len(artists_info)
         artists_list = []
         artists = ''
         for j in range(artists_num):
-            artist_name = jsonpath.jsonpath(data, "$.[tracks]["+str(i)+"]['artists']["+str(j)+"]['name']")[0]
+            artist_name = jsonpath.jsonpath(self.tracks[index], "$['artists'][" + str(j) + "]['name']")[0]
             artists_list.append(artist_name)
-            artists+=artist_name+","
+            artists += artist_name + ","
         artists = artists[:-1]
 
-        cover = jsonpath.jsonpath(data, "$.[tracks]["+str(i)+"]['album']['picUrl']")[0]
-        album = jsonpath.jsonpath(data, "$.[tracks]["+str(i)+"][album][name]")[0]
-        full_path = path + "/" + Playlist_name + "/" + name + " - " + artists + ".mp3"
+        cover = jsonpath.jsonpath(self.tracks[index], "$['album']['picUrl']")[0]
+        album = jsonpath.jsonpath(self.tracks[index], "$[album][name]")[0]
+        full_path = path + "/" + self.playlist_name + "/" + name + " - " + artists + ".mp3"
         if not os.path.exists(full_path):
-            MusicDown(Playlist_name,id, name, artists)
+            self.MusicDown(id, name, artists)
             if os.path.exists(full_path):
                 metadata.MetaData(full_path, name, artists_list, album, cover)
         else:
-            print(name+" - "+artists+".mp3  "+"already exist")
+            print(name + " - " + artists + ".mp3  " + "already exist")
 
-    time.sleep(3)
 
-else:
-    print("请求失败！")
+
+def main():
+    try:
+        Playlist_id = int(input("歌单id："))
+    except:
+        print("非法输入！")
+        time.sleep(3)
+        sys.exit(1)
+
+    downloader = Playlist(Playlist_id, path)
+    downloader.fetch_playlist_data()
+    downloader.create_playlist_dir()
+
+    for i in range(downloader.playlist_song_amount):
+        downloader.download_music(i)
+
+
+if __name__ == '__main__':
+    main()
+
 
 # name: $.[tracks][0]['name']
 # ID： $.[tracks][0]['id']
