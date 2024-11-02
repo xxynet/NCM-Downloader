@@ -21,7 +21,16 @@ A powerful NCM Downloader that supports built-in metadata (title, artists, album
 
 </div>
 
+## 开发背景
+本项目由一名高中生在业余时间开发，最初是想要下载带有元信息和歌曲封面的音乐文件，方便搭建音乐服务器（如Navidrome）时展示美观的海报墙。由于网上现成的工具都无法获取歌曲元信息，遂决定自己开发。想着应该也有人和我有相同的需求，同时也学习一下做开源项目的大致流程，所以就有了这个项目
+
 ## 📷 ScreenShots
+使用本项目下载音乐上传至Navidrome形成的海报墙：
+![](./Screenshot09.png)
+
+音流APP：
+![](./Screenshot10.png)
+
 ![](./Screenshot01-1.png)
 
 新版样式（v1.5.0及以上）：
