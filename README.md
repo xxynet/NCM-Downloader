@@ -12,12 +12,12 @@ A powerful NCM Downloader that supports built-in metadata (title, artists, album
   </a>
 
 <a href="https://github.com/xxynet/NCM-Downloader/releases">
-    <img src="https://img.shields.io/github/downloads/xxynet/NCM-Downloader/total" alt="latest version" />
+    <img src="https://img.shields.io/github/downloads/xxynet/NCM-Downloader/total" alt="downloads" />
   </a>
 
 <a href="https://github.com/xxynet/NCM-Downloader/issues">
     <img src="https://img.shields.io/github/issues/xxynet/NCM-Downloader
-    " alt="latest version" />
+    " alt="issues" />
   </a>
 
 </div>
