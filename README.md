@@ -3,7 +3,24 @@ A powerful NCM Downloader that supports built-in metadata (title, artists, album
 
 一个强大的网易云下载工具，支持内嵌元信息（歌曲名，歌手，专辑，歌曲封面），暂时只支持下载歌单
 
-[官网](https://ncm.xuxiny.top)
+<div align="center">
+
+[Docs](https://ncm.xuxiny.top)
+
+<a href="https://github.com/xxynet/NCM-Downloader/releases">
+    <img src="https://img.shields.io/github/v/release/xxynet/NCM-Downloader" alt="latest version" />
+  </a>
+
+<a href="https://github.com/xxynet/NCM-Downloader/releases">
+    <img src="https://img.shields.io/github/downloads/xxynet/NCM-Downloader/total" alt="latest version" />
+  </a>
+
+<a href="https://github.com/xxynet/NCM-Downloader/issues">
+    <img src="https://img.shields.io/github/issues/xxynet/NCM-Downloader
+    " alt="latest version" />
+  </a>
+
+</div>
 
 ## 📷 ScreenShots
 ![](./Screenshot01-1.png)
