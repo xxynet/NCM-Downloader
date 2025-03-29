@@ -7,6 +7,7 @@
 
 import requests
 import jsonpath
+import re
 import os
 import sys
 import time
@@ -27,6 +28,14 @@ lrc = 0
 '''
 
 init() # colorma
+print("  _   _  _____ __  __   _____   ______          ___   _ _      ____          _____  ______ _____  ")
+print(" | \ | |/ ____|  \/  | |  __ \ / __ \ \        / / \ | | |    / __ \   /\   |  __ \|  ____|  __ \ ")
+print(" |  \| | |    | \  / | | |  | | |  | \ \  /\  / /|  \| | |   | |  | | /  \  | |  | | |__  | |__) |")
+print("| . ` | |    | |\/| | | |  | | |  | |\ \/  \/ / | . ` | |   | |  | |/ /\ \ | |  | |  __| |  _  / ")
+print("| |\  | |____| |  | | | |__| | |__| | \  /\  /  | |\  | |___| |__| / ____ \| |__| | |____| | \ \ ")
+print(" |_| \_|\_____|_|  |_| |_____/ \____/   \/  \/   |_| \_|______\____/_/    \_\_____/|______|_|  \_\\")
+print("Github: https://github.com/xxynet/NCM-Downloader")
+print("Programmed by Caleb XXY")
 
 
 if not os.path.exists('config.ini'):
@@ -153,6 +162,7 @@ class Playlist:
 
         if response.ok:
             data = response.json()
+            # print(data) # DEBUG
             try:
                 self.tracks = jsonpath.jsonpath(data, "$.[tracks]")[0]
                 self.playlist_song_amount = len(self.tracks)
@@ -164,6 +174,11 @@ class Playlist:
                 download(self.playlist_id)
 
             self.playlist_name = jsonpath.jsonpath(data, "$.['name']")[0]
+
+            print("==================下载前确认==================")
+            print(f"歌单名称：{self.playlist_name}    歌单ID：{self.playlist_id}")
+            print(f"歌曲数量：{self.playlist_song_amount}")
+            input("按任意键继续")
         else:
             print("请求失败！")
             sys.exit(1)
@@ -188,6 +203,7 @@ def download(id):
             song.Download(downloader)
 
         print(f"Total: {downloader.playlist_song_amount} Success: {success_num}")
+        input("按任意键退出")
     else:
         print("获取失败，请重新运行本程序")
         time.sleep(3)
@@ -197,13 +213,20 @@ attempts = 1
 
 def main():
     try:
-        Playlist_id = int(input("歌单id："))
+        list_url = input("歌单URL或ID：")
+        ids = re.findall(r'[?&]id=(\d+)', list_url)
+        if ids:
+            playlist_id = ids[0]
+        else:
+            print("未识别到有效的输入！")
+            time.sleep(3)
+            sys.exit(1)
     except:
         print("非法输入！")
         time.sleep(3)
         sys.exit(1)
 
-    download(Playlist_id)
+    download(playlist_id)
 
 
 if __name__ == '__main__':

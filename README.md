@@ -39,6 +39,10 @@ A powerful NCM Downloader that supports built-in metadata (title, artists, album
 
 ![](./Screenshot02.png)
 
+v1.7.0：
+
+![](./Screenshot11.png)
+
 ![](./Screenshot03.png)
 
 ![](./Screenshot04.png)
