@@ -92,7 +92,7 @@ Copy your cookie into `cookie.txt`
 Run `main.py` and input your playlist ID
 
 
-For executable files, please access to [Releases](https://github.com/xxynet/NCM-Downloader/releases)
+For executables, please access to [Releases](https://github.com/xxynet/NCM-Downloader/releases)
 
 ## 💬 Q&A
 
@@ -131,6 +131,14 @@ For executable files, please access to [Releases](https://github.com/xxynet/NCM-
 <summary>Q: 运行后提示“Windows 已保护你的电脑”？</summary>
 
 > A: 本程序使用pyinstaller打包，请点击“更多信息” -> “仍要运行”
+
+</details>
+
+<details>
+
+<summary>Q: 为什么会提示红色的E</summary>
+
+> A: 该歌曲需要VIP才能收听，并且没有设置具有VIP的cookie
 
 </details>
 
