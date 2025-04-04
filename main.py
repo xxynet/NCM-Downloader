@@ -28,13 +28,14 @@ lrc = 0
 '''
 
 init() # colorma
-print("  _   _  _____ __  __   _____   ______          ___   _ _      ____          _____  ______ _____  ")
+print(Fore.GREEN + "  _   _  _____ __  __   _____   ______          ___   _ _      ____          _____  ______ _____  ")
 print(" | \ | |/ ____|  \/  | |  __ \ / __ \ \        / / \ | | |    / __ \   /\   |  __ \|  ____|  __ \ ")
 print(" |  \| | |    | \  / | | |  | | |  | \ \  /\  / /|  \| | |   | |  | | /  \  | |  | | |__  | |__) |")
-print("| . ` | |    | |\/| | | |  | | |  | |\ \/  \/ / | . ` | |   | |  | |/ /\ \ | |  | |  __| |  _  / ")
-print("| |\  | |____| |  | | | |__| | |__| | \  /\  /  | |\  | |___| |__| / ____ \| |__| | |____| | \ \ ")
-print(" |_| \_|\_____|_|  |_| |_____/ \____/   \/  \/   |_| \_|______\____/_/    \_\_____/|______|_|  \_\\")
+print(" | . ` | |    | |\/| | | |  | | |  | |\ \/  \/ / | . ` | |   | |  | |/ /\ \ | |  | |  __| |  _  / ")
+print(" | |\  | |____| |  | | | |__| | |__| | \  /\  /  | |\  | |___| |__| / ____ \| |__| | |____| | \ \ ")
+print(" |_| \_|\_____|_|  |_| |_____/ \____/   \/  \/   |_| \_|______\____/_/    \_\_____/|______|_|  \_\\" + Style.RESET_ALL)
 print("Github: https://github.com/xxynet/NCM-Downloader")
+print("Docs: https://ncm.xuxiny.top/")
 print("Programmed by Caleb XXY")
 
 
@@ -46,6 +47,30 @@ if not os.path.exists('cookie.txt'):
     with open("cookie.txt", "w", encoding="utf-8") as cookie_value:
         cookie_value.write("")
     print("首次运行，已自动创建cookie.txt文件")
+
+def formatted_print(type, text):
+    if type == 'e':
+        print("[" + Fore.RED + "E" + Style.RESET_ALL + "] " + text)
+    elif type == 'ok':
+        print("[" + Fore.GREEN + "OK" + Style.RESET_ALL + "] " + text)
+    elif type == 'i':
+        print("[" + Fore.CYAN + "INFO" + Style.RESET_ALL + "] " + text)
+    elif type == 'w':
+        print("[" + Fore.YELLOW + "WARN" + Style.RESET_ALL + "] " + text)
+
+def is_cookie_format_valid(cookie_str: str) -> bool:
+    if not cookie_str:
+        return False
+
+    parts = cookie_str.split(';')
+    for part in parts:
+        if '=' not in part:
+            return False
+        key, _ = part.strip().split('=', 1)
+        if not key.strip():
+            return False
+    return True
+
 
 try:
     config = configparser.RawConfigParser()
@@ -59,6 +84,16 @@ try:
 
     with open("cookie.txt", "r") as cookie_file:
         cookie = cookie_file.read()
+
+    if cookie:
+        if is_cookie_format_valid(cookie):
+            formatted_print('ok', "Cookie已注入")
+        else:
+            formatted_print('e', "不合法的Cookie")
+            time.sleep(3)
+            sys.exit(1)
+    else:
+        formatted_print('w', "未注入Cookie")
 
 except Exception as e:
     print(e)
@@ -112,19 +147,25 @@ class Song:
     def MusicDown(self, playlist, id, name, artists):
         global success_num
         print("Downloading " + name + " - " + artists + ".mp3", end='\r')
-        audio_data = requests.get('https://music.163.com/song/media/outer/url?id=' + str(id), headers=self.headers)
-        content_type = audio_data.headers.get('Content-Type')
+        try:
+            audio_data = requests.get('https://music.163.com/song/media/outer/url?id=' + str(id), headers=self.headers)
+            content_type = audio_data.headers.get('Content-Type')
 
-        olyric = self.olrc
-        tlyric = self.tlrc
+            olyric = self.olrc
+            tlyric = self.tlrc
 
-        if "text/html" not in content_type:
-            with open(path + "/" + playlist.playlist_name + "/" + name + " - " + artists + ".mp3", "wb") as file:
-                file.write(audio_data.content)
-            success_num += 1
-            print("[" + Fore.GREEN + "OK" + Style.RESET_ALL + "] " + name + " - " + artists + ".mp3")
-        else:  # VIP
-            print("[" + Fore.RED + "E" + Style.RESET_ALL + "] " + name + " - " + artists + ".mp3")
+            if "text/html" not in content_type:
+                with open(path + "/" + playlist.playlist_name + "/" + name + " - " + artists + ".mp3", "wb") as file:
+                    file.write(audio_data.content)
+                success_num += 1
+                # print
+                formatted_print('ok', name + " - " + artists + ".mp3")
+            else:  # VIP
+                # print
+                formatted_print('e', name + " - " + artists + ".mp3")
+        except Exception as e:
+            # print
+            formatted_print('e', e)
         if bool_lrc == '1':
             merged_lrc = metadata.merge_lrc(olyric, tlyric)
             with open(path + "/" + playlist.playlist_name + "/" + name + " - " + artists + ".lrc", "w",
@@ -178,7 +219,7 @@ class Playlist:
             print("==================下载前确认==================")
             print(f"歌单名称：{self.playlist_name}    歌单ID：{self.playlist_id}")
             print(f"歌曲数量：{self.playlist_song_amount}")
-            input("按任意键继续")
+            input("按回车键继续")
         else:
             print("请求失败！")
             sys.exit(1)
@@ -203,7 +244,7 @@ def download(id):
             song.Download(downloader)
 
         print(f"Total: {downloader.playlist_song_amount} Success: {success_num}")
-        input("按任意键退出")
+        input("按回车键退出")
     else:
         print("获取失败，请重新运行本程序")
         time.sleep(3)
