@@ -165,10 +165,17 @@ class Song:
         self.cover = track['album'].get('picUrl')
         self.album = track['album'].get('name')
 
-        lrc = requests.get(f"https://music.163.com/api/song/lyric?id={self.track_id}&lv=1&kv=1&tv=-1").json()
+        if bool_lrc != "0":
+            try:
+                lrc = requests.get(f"https://music.163.com/api/song/lyric?id={self.track_id}&lv=1&kv=1&tv=-1").json()
 
-        self.olrc = lrc['lrc'].get('lyric')
-        self.tlrc = lrc['tlyric'].get('lyric')
+                self.olrc = lrc['lrc'].get('lyric')
+                if 'tlyric' in lrc:
+                    self.tlrc = lrc['tlyric'].get('lyric')
+                else:
+                    self.tlrc = None
+            except Exception as e:
+                formatted_print('e', e)
 
     def Download(self, playlist):
         name = self.name
