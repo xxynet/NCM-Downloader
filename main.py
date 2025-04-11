@@ -15,6 +15,20 @@ import configparser
 from colorama import init, Fore, Style
 import metadata
 
+
+def formatted_print(type, text):
+    if type == 'e':
+        print("[" + Fore.RED + "E" + Style.RESET_ALL + "] " + text)
+    elif type == 'ok':
+        print("[" + Fore.GREEN + "OK" + Style.RESET_ALL + "] " + text)
+    elif type == 'i':
+        print("[" + Fore.CYAN + "INFO" + Style.RESET_ALL + "] " + text)
+    elif type == 'w':
+        print("[" + Fore.YELLOW + "WARN" + Style.RESET_ALL + "] " + text)
+
+
+version = 'v1.8.0'
+
 config_file = '''[output]
 
 #设置歌单输出路径，如果为空则默认为程序所在目录（路径无需引号包裹）
@@ -25,6 +39,11 @@ filename = 0
 
 #是否下载歌词 1 -> 下载LRC歌词文件  2 -> 内嵌歌词  0 -> False
 lrc = 0
+
+[settings]
+
+#是否检查更新，如果出现问题可尝试将其改为0禁用自动更新
+detect-update = 1
 '''
 
 init() # colorma
@@ -37,26 +56,18 @@ print(" |_| \_|\_____|_|  |_| |_____/ \____/   \/  \/   |_| \_|______\____/_/   
 print("Github: https://github.com/xxynet/NCM-Downloader")
 print("Docs: https://ncm.xuxiny.top/")
 print("Programmed by Caleb XXY")
+print(f"当前版本：{version}")
 
 
 if not os.path.exists('config.ini'):
     with open("config.ini", "w", encoding="utf-8") as config:
         config.write(config_file)
-    print("首次运行，已自动创建config.in文件")
+    formatted_print('i', "首次运行，已自动创建config.ini文件")
 if not os.path.exists('cookie.txt'):
     with open("cookie.txt", "w", encoding="utf-8") as cookie_value:
         cookie_value.write("")
-    print("首次运行，已自动创建cookie.txt文件")
+    formatted_print('i', "首次运行，已自动创建cookie.txt文件")
 
-def formatted_print(type, text):
-    if type == 'e':
-        print("[" + Fore.RED + "E" + Style.RESET_ALL + "] " + text)
-    elif type == 'ok':
-        print("[" + Fore.GREEN + "OK" + Style.RESET_ALL + "] " + text)
-    elif type == 'i':
-        print("[" + Fore.CYAN + "INFO" + Style.RESET_ALL + "] " + text)
-    elif type == 'w':
-        print("[" + Fore.YELLOW + "WARN" + Style.RESET_ALL + "] " + text)
 
 def is_cookie_format_valid(cookie_str: str) -> bool:
     if not cookie_str:
@@ -72,6 +83,24 @@ def is_cookie_format_valid(cookie_str: str) -> bool:
     return True
 
 
+def get_latest_release(owner, repo):
+    url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
+    response = requests.get(url, timeout=5)
+
+    if response.status_code == 200:
+        data = response.json()
+        return {
+            "tag_name": data["tag_name"],
+            # "name": data["name"],
+            # "body": data["body"],
+            "html_url": data["html_url"],
+            # "published_at": data["published_at"]
+        }
+    else:
+        formatted_print('e', f"检查更新失败，状态码：{response.status_code}")
+        return None
+
+
 try:
     config = configparser.RawConfigParser()
     config.read('config.ini',encoding='utf-8')
@@ -81,6 +110,8 @@ try:
     filename = config.get('output','filename')
 
     bool_lrc = config.get('output','lrc')
+
+    detect_update = config.get('settings','detect-update')
 
     with open("cookie.txt", "r") as cookie_file:
         cookie = cookie_file.read()
@@ -100,6 +131,20 @@ except Exception as e:
     print("读取配置文件失败")
     time.sleep(3)
     sys.exit(1)
+
+if detect_update == "1":
+    formatted_print('i', "正在检查更新...")
+    try:
+        release_info = get_latest_release("xxynet", "NCM-Downloader")
+        latest_version = release_info["tag_name"]
+        release_url = release_info["html_url"]
+        if latest_version:
+            if latest_version != version:
+                formatted_print('i', f"发现新版本：{latest_version}\n前往更新：{release_url}")
+            else:
+                formatted_print('i', "已是最新版本！")
+    except Exception as e:
+        formatted_print('e', e)
 
 success_num = 0
 
@@ -255,13 +300,16 @@ attempts = 1
 def main():
     try:
         list_url = input("歌单URL或ID：")
-        ids = re.findall(r'[?&]id=(\d+)', list_url)
-        if ids:
-            playlist_id = ids[0]
+        if list_url.isdigit():
+            playlist_id = list_url
         else:
-            print("未识别到有效的输入！")
-            time.sleep(3)
-            sys.exit(1)
+            ids = re.findall(r'[?&]id=(\d+)', list_url)
+            if ids:
+                playlist_id = ids[0]
+            else:
+                print("未识别到有效的输入！")
+                time.sleep(3)
+                sys.exit(1)
     except:
         print("非法输入！")
         time.sleep(3)
