@@ -3,6 +3,8 @@ A powerful NCM Downloader that supports built-in metadata (title, artists, album
 
 一个强大的网易云下载工具，支持内嵌元信息（歌曲名，歌手，专辑，歌曲封面），暂时只支持下载歌单
 
+![](./Screenshot12.png)
+
 <div align="center">
 
 [Docs](https://ncm.xuxiny.top)
@@ -25,39 +27,29 @@ A powerful NCM Downloader that supports built-in metadata (title, artists, album
 本项目由一名高中生在业余时间开发，最初是想要下载带有元信息和歌曲封面的音乐文件，方便搭建音乐服务器（如Navidrome）时展示美观的海报墙。由于网上现成的工具都无法获取歌曲元信息，遂决定自己开发。想着应该也有人和我有相同的需求，同时也学习一下做开源项目的大致流程，所以就有了这个项目
 
 ## 📷 ScreenShots
-使用本项目下载音乐上传至Navidrome形成的海报墙：
-![](./Screenshot09.png)
 
-音流APP：
-![](./Screenshot10.png)
+| Navidrome  | 音流 |
+| ------------- | ------------- |
+| ![](./Screenshot09.png)  | ![](./Screenshot10.png)  |
 
-![](./Screenshot01-1.png)
 
-新版样式（v1.5.0及以上）：
-
-![](./Screenshot01-2.png)
 
 ![](./Screenshot02.png)
 
-v1.7.0：
+![](./Screenshot12.png)
 
-![](./Screenshot11.png)
-
-![](./Screenshot03.png)
-
-![](./Screenshot04.png)
+| ![](./Screenshot03.png) | ![](./Screenshot04.png) |
+|--|--|
 
 v1.1.0及以上支持下载歌词，使用支持读取歌词文件的播放器打开即可（图为Dopamine）：
 
-![](./Screenshot05.png)
-
-![](./Screenshot06.png)
+| ![](./Screenshot05.png) | ![](./Screenshot06.png) |
+|--|--|
 
 v1.5.0及以上支持同时获取原始歌词和翻译歌词，并且支持内嵌歌词和歌词文件两种模式
 
-![](./Screenshot07.png)
-
-![](./Screenshot08.png)
+| ![](./Screenshot07.png) | ![](./Screenshot08.png) |
+|--|--|
 
 ## 🔨 Usage
 Clone this project
