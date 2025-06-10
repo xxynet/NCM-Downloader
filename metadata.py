@@ -3,8 +3,9 @@ from mutagen.id3 import APIC, ID3, USLT, error
 import requests
 import re
 
+
 # filepath, name, artists, album, cover_url
-def MetaData(path, name, artists, album, cover):
+def meta_data(path, name, artists, album, cover):
 
     audio = EasyMP3(path)
 
@@ -13,7 +14,6 @@ def MetaData(path, name, artists, album, cover):
     audio["album"] = album
 
     audio.save()
-
 
     audio = ID3(path)
 
@@ -45,6 +45,7 @@ def parse_lrc(lrc):
             else:
                 lrc_dict[time] = [text]
     return lrc_dict
+
 
 def merge_lrc(olrc, tlrc):
     if tlrc:

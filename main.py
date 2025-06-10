@@ -15,6 +15,8 @@ import configparser
 from colorama import init, Fore, Style
 import metadata
 
+from config import VERSION, config_file
+
 
 def formatted_print(type, text):
     if type == 'e':
@@ -27,25 +29,6 @@ def formatted_print(type, text):
         print("[" + Fore.YELLOW + "WARN" + Style.RESET_ALL + "] " + text)
 
 
-version = 'v1.8.0'
-
-config_file = '''[output]
-
-#设置歌单输出路径，如果为空则默认为程序所在目录（路径无需引号包裹）
-path = 
-
-#0->歌名-歌手 1->歌手-歌名 2->歌名（暂时无效）
-filename = 0
-
-#是否下载歌词 1 -> 下载LRC歌词文件  2 -> 内嵌歌词  0 -> False
-lrc = 0
-
-[settings]
-
-#是否检查更新，如果出现问题可尝试将其改为0禁用自动更新
-detect-update = 1
-'''
-
 init() # colorma
 print(Fore.GREEN + "  _   _  _____ __  __   _____   ______          ___   _ _      ____          _____  ______ _____  ")
 print(" | \ | |/ ____|  \/  | |  __ \ / __ \ \        / / \ | | |    / __ \   /\   |  __ \|  ____|  __ \ ")
@@ -56,7 +39,7 @@ print(" |_| \_|\_____|_|  |_| |_____/ \____/   \/  \/   |_| \_|______\____/_/   
 print("Github: https://github.com/xxynet/NCM-Downloader")
 print("Docs: https://ncm.xuxiny.top/")
 print("Programmed by Caleb XXY")
-print(f"当前版本：{version}")
+print(f"当前版本：{VERSION}")
 
 
 if not os.path.exists('config.ini'):
@@ -128,7 +111,7 @@ try:
 
 except Exception as e:
     print(e)
-    print("读取配置文件失败")
+    formatted_print('e', "读取配置文件失败")
     time.sleep(3)
     sys.exit(1)
 
@@ -139,7 +122,7 @@ if detect_update == "1":
         latest_version = release_info["tag_name"]
         release_url = release_info["html_url"]
         if latest_version:
-            if latest_version != version:
+            if latest_version != VERSION:
                 formatted_print('i', f"发现新版本：{latest_version}\n前往更新：{release_url}")
             else:
                 formatted_print('i', "已是最新版本！")
@@ -164,6 +147,8 @@ class Song:
         self.artists = [artist["name"] for artist in track.get("artists", [])]
         self.cover = track['album'].get('picUrl')
         self.album = track['album'].get('name')
+        self.olrc = None
+        self.tlrc = None
 
         if bool_lrc != "0":
             try:
@@ -178,6 +163,7 @@ class Song:
                 formatted_print('e', e)
 
     def Download(self, playlist):
+        global success_num
         name = self.name
         id = self.track_id
         artists_list = self.artists
@@ -192,9 +178,10 @@ class Song:
         if not os.path.exists(full_path):
             self.MusicDown(playlist, id, name, artists)
             if os.path.exists(full_path):
-                metadata.MetaData(full_path, name, artists_list, album, cover)
+                metadata.meta_data(full_path, name, artists_list, album, cover)
         else:
-            print(name + " - " + artists + ".mp3  " + "already exist")
+            success_num += 1
+            formatted_print('ok', name + " - " + artists + ".mp3  " + "already exist")
 
     def MusicDown(self, playlist, id, name, artists):
         global success_num
@@ -203,8 +190,9 @@ class Song:
             audio_data = requests.get('https://music.163.com/song/media/outer/url?id=' + str(id), headers=self.headers)
             content_type = audio_data.headers.get('Content-Type')
 
-            olyric = self.olrc
-            tlyric = self.tlrc
+            if bool_lrc != "0":
+                olyric = self.olrc
+                tlyric = self.tlrc
 
             if "text/html" not in content_type:
                 with open(path + "/" + playlist.playlist_name + "/" + name + " - " + artists + ".mp3", "wb") as file:
@@ -223,12 +211,9 @@ class Song:
             with open(path + "/" + playlist.playlist_name + "/" + name + " - " + artists + ".lrc", "w",
                       encoding='utf-8') as file:
                 file.write(merged_lrc)
-        elif bool_lrc == '2' and (not "text/html" in content_type):
+        elif bool_lrc == '2' and ("text/html" not in content_type):
             merged_lrc = metadata.merge_lrc(olyric, tlyric)
             metadata.builtin_lyrics(path + "/" + playlist.playlist_name + "/" + name + " - " + artists + ".mp3", merged_lrc)
-
-
-
 
 
 class Playlist:
@@ -260,7 +245,7 @@ class Playlist:
                 self.tracks = jsonpath.jsonpath(data, "$.[tracks]")[0]
                 self.playlist_song_amount = len(self.tracks)
             except:
-                print("获取歌曲信息异常，正在重试")
+                formatted_print('e', "获取歌曲信息异常，正在重试")
                 global attempts
                 attempts += 1
                 time.sleep(1)
@@ -273,7 +258,7 @@ class Playlist:
             print(f"歌曲数量：{self.playlist_song_amount}")
             input("按回车键继续")
         else:
-            print("请求失败！")
+            formatted_print('e', "请求失败！")
             sys.exit(1)
 
     def create_playlist_dir(self):
@@ -281,14 +266,15 @@ class Playlist:
             if not os.path.exists(self.download_path + "/" + self.playlist_name):
                 os.mkdir(path + "/" + self.playlist_name)
         except:
-            print("创建歌单文件夹失败!")
+            formatted_print('e',"创建歌单文件夹失败!")
             time.sleep(3)
             sys.exit(1)
 
-def download(id):
+
+def download(playlist_id):
     global attempts, success_num
-    if attempts <=3:
-        downloader = Playlist(id, path)
+    if attempts <= 3:
+        downloader = Playlist(playlist_id, path)
 
         for i in range(downloader.playlist_song_amount):
             song = Song(downloader.tracks[i])
@@ -297,12 +283,16 @@ def download(id):
 
         print(f"Total: {downloader.playlist_song_amount} Success: {success_num}")
         input("按回车键退出")
+        time.sleep(0.5)
+        sys.exit(1)
     else:
-        print("获取失败，请重新运行本程序")
+        formatted_print('e', "获取失败，请重新运行本程序")
         time.sleep(3)
         sys.exit(1)
 
+
 attempts = 1
+
 
 def main():
     try:
@@ -314,11 +304,10 @@ def main():
             if ids:
                 playlist_id = ids[0]
             else:
-                print("未识别到有效的输入！")
+                formatted_print('e', "未识别到有效的输入！")
                 time.sleep(3)
                 sys.exit(1)
     except:
-        print("非法输入！")
         time.sleep(3)
         sys.exit(1)
 
