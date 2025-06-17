@@ -15,6 +15,7 @@ import configparser
 from colorama import init, Fore, Style
 import metadata
 
+from api import NCMApi
 from config import VERSION, config_file
 
 
@@ -41,7 +42,6 @@ print("Docs: https://ncm.xuxiny.top/")
 print("Programmed by Caleb XXY")
 print(f"当前版本：{VERSION}")
 
-
 if not os.path.exists('config.ini'):
     with open("config.ini", "w", encoding="utf-8") as config:
         config.write(config_file)
@@ -50,6 +50,10 @@ if not os.path.exists('cookie.txt'):
     with open("cookie.txt", "w", encoding="utf-8") as cookie_value:
         cookie_value.write("")
     formatted_print('i', "首次运行，已自动创建cookie.txt文件")
+
+
+def generate_file_path(name, artists, playlist_name):
+    return path + "/" + playlist_name + "/" + name + " - " + artists
 
 
 def is_cookie_format_valid(cookie_str: str) -> bool:
@@ -131,41 +135,40 @@ if detect_update == "1":
 
 success_num = 0
 
+api = NCMApi(cookie)
+
 
 class Song:
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.67',
-        'Cookie': cookie,
-        'Origin': 'https://music.163.com/',
-        'Referer': 'https://music.163.com/'
-    }
 
-    def __init__(self, track):
-        self.track = track
-        self.name = track['name']
-        self.track_id = track['id']
-        self.artists = [artist["name"] for artist in track.get("artists", [])]
-        self.cover = track['album'].get('picUrl')
-        self.album = track['album'].get('name')
+    def __init__(self, song_id):
+        self.song_id = song_id
+        self.name = None
+        self.artists = None
+        self.cover = None  # PicUrl
+        self.album = None  # album name
         self.olrc = None
         self.tlrc = None
+        self.get_song_info()
 
-        if bool_lrc != "0":
-            try:
-                lrc = requests.get(f"https://music.163.com/api/song/lyric?id={self.track_id}&lv=1&kv=1&tv=-1").json()
-
-                self.olrc = lrc['lrc'].get('lyric')
-                if 'tlyric' in lrc:
-                    self.tlrc = lrc['tlyric'].get('lyric')
-                else:
-                    self.tlrc = None
-            except Exception as e:
-                formatted_print('e', e)
+    def get_song_info(self):
+        song_info = api.get_song_info(self.song_id)
+        if song_info['status'] == "success":
+            self.name = song_info['name']
+            self.artists = song_info['artists']
+            self.cover = song_info['picUrl']
+            self.album = song_info['album_name']  # album name
+            if bool_lrc != "0":
+                try:
+                    self.olrc, self.tlrc = api.get_lyrics(self.song_id)
+                except Exception as e:
+                    formatted_print('e', e)
+        else:
+            formatted_print('e', "获取歌曲信息失败！")
 
     def Download(self, playlist):
         global success_num
         name = self.name
-        id = self.track_id
+        id = self.song_id
         artists_list = self.artists
         artists = ''
         for j in artists_list:
@@ -174,99 +177,84 @@ class Song:
 
         cover = self.cover
         album = self.album
-        full_path = path + "/" + playlist.playlist_name + "/" + name + " - " + artists + ".mp3"
+        full_path = generate_file_path(name, artists, playlist.playlist_name) + ".mp3"
         if not os.path.exists(full_path):
-            self.MusicDown(playlist, id, name, artists)
+            self.music_down(playlist, id, name, artists)
             if os.path.exists(full_path):
                 metadata.meta_data(full_path, name, artists_list, album, cover)
         else:
             success_num += 1
             formatted_print('ok', name + " - " + artists + ".mp3  " + "already exist")
 
-    def MusicDown(self, playlist, id, name, artists):
+    def music_down(self, playlist, id, name, artists):
         global success_num
         print("Downloading " + name + " - " + artists + ".mp3", end='\r')
         try:
-            audio_data = requests.get('https://music.163.com/song/media/outer/url?id=' + str(id), headers=self.headers)
-            content_type = audio_data.headers.get('Content-Type')
+            is_succeed, audio_data = api.get_mp3_data(id)
 
-            if bool_lrc != "0":
-                olyric = self.olrc
-                tlyric = self.tlrc
-
-            if "text/html" not in content_type:
-                with open(path + "/" + playlist.playlist_name + "/" + name + " - " + artists + ".mp3", "wb") as file:
+            if is_succeed:
+                with open(generate_file_path(name, artists, playlist.playlist_name)+".mp3", "wb") as file:
                     file.write(audio_data.content)
                 success_num += 1
-                # print
                 formatted_print('ok', name + " - " + artists + ".mp3")
             else:  # VIP
-                # print
                 formatted_print('e', name + " - " + artists + ".mp3")
         except Exception as e:
-            # print
             formatted_print('e', e)
         if bool_lrc == '1':
-            merged_lrc = metadata.merge_lrc(olyric, tlyric)
-            with open(path + "/" + playlist.playlist_name + "/" + name + " - " + artists + ".lrc", "w",
+            merged_lrc = metadata.merge_lrc(self.olrc, self.tlrc)
+            with open(generate_file_path(name, artists, playlist.playlist_name) + ".lrc", "w",
                       encoding='utf-8') as file:
                 file.write(merged_lrc)
-        elif bool_lrc == '2' and ("text/html" not in content_type):
-            merged_lrc = metadata.merge_lrc(olyric, tlyric)
-            metadata.builtin_lyrics(path + "/" + playlist.playlist_name + "/" + name + " - " + artists + ".mp3", merged_lrc)
+        elif bool_lrc == '2' and is_succeed:
+            merged_lrc = metadata.merge_lrc(self.olrc, self.tlrc)
+            metadata.builtin_lyrics(generate_file_path(name, artists, playlist.playlist_name) + ".mp3", merged_lrc)
 
 
 class Playlist:
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.67',
-        'Cookie': cookie,
-        'Origin': 'https://music.163.com/',
-        'Referer': 'https://music.163.com/'
-    }
 
     def __init__(self, playlist_id, download_path):
         self.playlist_id = playlist_id
         self.download_path = download_path
         self.playlist_name = None
         self.playlist_song_amount = None
-        self.tracks = []
+        self.ids = None
+        self.creator = None
 
         self.fetch_playlist_data()
         self.create_playlist_dir()
 
     def fetch_playlist_data(self):
+        try:
+            playlist_info = api.get_playlist_info(self.playlist_id)
+        except:
+            formatted_print('e', f"获取歌曲信息异常，正在重试")
+            global attempts
+            attempts += 1
+            time.sleep(1)
+            download(self.playlist_id)
 
-        response = requests.get("https://music.163.com/api/playlist/detail?id=" + str(self.playlist_id), headers=self.headers)
-
-        if response.ok:
-            data = response.json()
-            # print(data) # DEBUG
-            try:
-                self.tracks = jsonpath.jsonpath(data, "$.[tracks]")[0]
-                self.playlist_song_amount = len(self.tracks)
-            except:
-                formatted_print('e', "获取歌曲信息异常，正在重试")
-                global attempts
-                attempts += 1
-                time.sleep(1)
-                download(self.playlist_id)
-
-            self.playlist_name = jsonpath.jsonpath(data, "$.['name']")[0]
+        if playlist_info['status'] == "success":
+            self.playlist_name = playlist_info['name']
+            self.playlist_id = playlist_info['id']
+            self.playlist_song_amount = playlist_info['song_num']
+            self.creator = playlist_info['creator']
+            self.ids = playlist_info['trackIds']
 
             print("==================下载前确认==================")
             print(f"歌单名称：{self.playlist_name}    歌单ID：{self.playlist_id}")
-            print(f"歌曲数量：{self.playlist_song_amount}")
+            print(f"歌曲数量：{self.playlist_song_amount}      创建者：{self.creator}")
             input("按回车键继续")
         else:
-            formatted_print('e', "请求失败！")
+            formatted_print('e', f"请求失败！状态码：{playlist_info['status']}")
             sys.exit(1)
 
     def create_playlist_dir(self):
         try:
             if not os.path.exists(self.download_path + "/" + self.playlist_name):
-                os.mkdir(path + "/" + self.playlist_name)
-        except:
-            formatted_print('e',"创建歌单文件夹失败!")
+                os.mkdir(self.download_path + "/" + self.playlist_name)
+        except Exception as e:
+            formatted_print('e',f"创建歌单文件夹失败! 错误信息：{str(e)}")
             time.sleep(3)
             sys.exit(1)
 
@@ -277,7 +265,8 @@ def download(playlist_id):
         downloader = Playlist(playlist_id, path)
 
         for i in range(downloader.playlist_song_amount):
-            song = Song(downloader.tracks[i])
+            song_id = downloader.ids[i]
+            song = Song(song_id)
 
             song.Download(downloader)
 
@@ -316,11 +305,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-# name: $.[tracks][0]['name']
-# ID： $.[tracks][0]['id']
-# 封面：$.[tracks][0]['album']['picUrl']
-# 歌手：$.[tracks][0]['artists'][0]['name']
-# 专辑：$.[tracks][0][album][name]
-# 歌词：https://music.163.com/api/song/lyric?id={歌曲ID}&lv=1&kv=1&tv=-1
