@@ -101,7 +101,7 @@ try:
     detect_update = config.get('settings','detect-update')
 
     with open("cookie.txt", "r") as cookie_file:
-        cookie = cookie_file.read()
+        cookie = cookie_file.read().strip()
 
     if cookie:
         if is_cookie_format_valid(cookie):
