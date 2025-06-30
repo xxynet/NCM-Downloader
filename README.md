@@ -3,7 +3,7 @@ A powerful NCM Downloader that supports built-in metadata (title, artists, album
 
 一个强大的网易云下载工具，支持内嵌元信息（歌曲名，歌手，专辑，歌曲封面），暂时只支持下载歌单
 
-![](./Screenshot12.png)
+![](./Screenshots/Screenshot12.png)
 
 <div align="center">
 
@@ -30,25 +30,25 @@ A powerful NCM Downloader that supports built-in metadata (title, artists, album
 
 | Navidrome  | 音流 |
 | ------------- | ------------- |
-| ![](./Screenshot09.png)  | ![](./Screenshot10.png)  |
+| ![](./Screenshots/Screenshot09.png)  | ![](./Screenshots/Screenshot10.png)  |
 
 
 
-![](./Screenshot02.png)
+![](./Screenshots/Screenshot02.png)
 
-![](./Screenshot12.png)
+![](./Screenshots/Screenshot12.png)
 
-| ![](./Screenshot03.png) | ![](./Screenshot04.png) |
+| ![](./Screenshots/Screenshot03.png) | ![](./Screenshots/Screenshot04.png) |
 |--|--|
 
 v1.1.0及以上支持下载歌词，使用支持读取歌词文件的播放器打开即可（图为Dopamine）：
 
-| ![](./Screenshot05.png) | ![](./Screenshot06.png) |
+| ![](./Screenshots/Screenshot05.png) | ![](./Screenshots/Screenshot06.png) |
 |--|--|
 
 v1.5.0及以上支持同时获取原始歌词和翻译歌词，并且支持内嵌歌词和歌词文件两种模式
 
-| ![](./Screenshot07.png) | ![](./Screenshot08.png) |
+| ![](./Screenshots/Screenshot07.png) | ![](./Screenshots/Screenshot08.png) |
 |--|--|
 
 ## 🔨 Usage
