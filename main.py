@@ -56,6 +56,12 @@ def generate_file_path(name, artists, playlist_name):
     return path + "/" + playlist_name + "/" + name + " - " + artists
 
 
+def safe_name(origin_name):
+    illegal_chars = r'[\\/*?:"<>|\x00-\x1f]'
+    file_name = re.sub(illegal_chars, "_", origin_name)
+    return file_name
+
+
 def is_cookie_format_valid(cookie_str: str) -> bool:
     if not cookie_str:
         return False
@@ -167,7 +173,7 @@ class Song:
 
     def Download(self, playlist):
         global success_num
-        name = self.name
+        name = safe_name(self.name) # illegal_chars = r'[\\/*?:"<>|]'
         id = self.song_id
         artists_list = self.artists
         artists = ''
@@ -235,7 +241,7 @@ class Playlist:
             download(self.playlist_id)
 
         if playlist_info['status'] == "success":
-            self.playlist_name = playlist_info['name']
+            self.playlist_name = safe_name(playlist_info['name']) # illegal_chars = r'[\\/*?:"<>|]'
             self.playlist_id = playlist_info['id']
             self.playlist_song_amount = playlist_info['song_num']
             self.creator = playlist_info['creator']
