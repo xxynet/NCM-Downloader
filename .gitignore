@@ -6,3 +6,4 @@ build/
 venv/
 Thumbs.db
 .env
+main.spec
