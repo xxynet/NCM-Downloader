@@ -1,20 +1,24 @@
----
-name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: ''
-assignees: ''
-
----
-
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
-
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
-
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
-
-**Additional context**
-Add any other context or screenshots about the feature request here.
+name: "Feature request"
+description: Feature request
+labels: [enhancement]
+body:
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: Description of the feature / 需求描述
+    validations:
+      required: true
+  - type: textarea
+    id: suggested-solution
+    attributes:
+      label: Suggested solution / 实现思路
+      description: |
+        Solutions to achieve this requirement.
+        实现此需求的解决思路。
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context / 附件
+      description: |
+        Any other context or screenshots about the feature request here, or information you find helpful.
+        相关的任何其他上下文或截图，或者你觉得有帮助的信息
