@@ -21,7 +21,7 @@ body:
     id: reproduce
     attributes:
       label: To Reproduce / BUG复现
-      description: Steps to reproduce the behavior: / 复现BUG的步骤
+      description: Steps to reproduce the behavior / 复现BUG的步骤
       placeholder: 1. Go to '...'\n2. Click on '....'\n3. Scroll down to '....'\n4. See error
       value: ""
     validations:
