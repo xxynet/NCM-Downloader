@@ -15,7 +15,7 @@ body:
     attributes:
       label: Describe the bug / 描述这个Bug
       description: A clear and concise description of what the bug is. / 清晰准确的描述这个bug
-      placeholder: " "
+      placeholder: "Describe the bug"
     validations:
       required: false
   
@@ -25,7 +25,6 @@ body:
       label: To Reproduce / BUG复现
       description: Steps to reproduce the behavior / 复现BUG的步骤
       placeholder: "1. Go to '...'\n2. Click on '....'\n3. Scroll down to '....'\n4. See error"
-      value: " "
     validations:
       required: true
   
@@ -43,7 +42,7 @@ body:
     attributes:
       label: Version
       description: Which version are you on?
-      placeholder: " "
+      placeholder: "Version"
     validations:
       required: true
   
