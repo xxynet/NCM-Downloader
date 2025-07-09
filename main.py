@@ -293,6 +293,7 @@ attempts = 1
 def main():
     print("==================模式选择==================")
     print("1.下载歌单                  2.ncm文件转mp3文件")
+    print("3.音乐刮削")
     choice = input("请输入选项：")
     if choice == "1":
         try:
@@ -321,8 +322,29 @@ def main():
             converted_files = ncm_dump()
         formatted_print('i', "已转换文件：")
         print(converted_files)
-        time.sleep(3)
+        input("按回车键退出")
+        time.sleep(0.5)
         sys.exit(1)
+    elif choice == "3":
+        music_file_path = input("请输需要刮削的音乐文件夹路径：")
+        if music_file_path:
+            formatted_print('i', "开始刮削")
+            mp3_files = [f for f in os.listdir(music_file_path) if f.endswith(".mp3")]
+            for mp3_file in mp3_files:
+                song_info = api.get_song_info_by_keyword(mp3_file[:-4])
+                is_succeed = song_info['status']
+                if is_succeed == "success":
+                    metadata.meta_data(music_file_path+"/"+mp3_file, song_info["name"], song_info["artists"], song_info["album_name"], song_info["picUrl"])
+                    formatted_print('ok', mp3_file)
+                else:
+                    formatted_print('e', mp3_file)
+            input("按回车键退出")
+            time.sleep(0.5)
+            sys.exit(1)
+        else:
+            formatted_print('e', "请输入有效的路径")
+            time.sleep(3)
+            sys.exit(1)
 
 
 if __name__ == '__main__':

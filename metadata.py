@@ -17,16 +17,26 @@ def meta_data(path, name, artists, album, cover):
 
     audio = ID3(path)
 
+    audio.delall('APIC') # clear the image data
+
     response = requests.get(cover)
     image_data = response.content
 
-    audio['APIC'] = APIC(
+    # audio['APIC'] = APIC(
+    #     encoding=0,
+    #     mime='image/jpeg',
+    #     type=3,
+    #     desc=u'Cover',
+    #     data=image_data
+    # )
+
+    audio.add(APIC(
         encoding=0,
-        mime='image/jpeg',
-        type=3,
+        mime='image/jpeg',  # Change this if you know it's a different image type
+        type=3,  # 3 is for cover image
         desc=u'Cover',
         data=image_data
-    )
+    ))
 
     audio.save()
 

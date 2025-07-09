@@ -41,7 +41,7 @@ class NCMApi:
                 'status': 'success',
                 'name': jsonpath.jsonpath(resp_json,"$.songs[0].name")[0],
                 'artists': jsonpath.jsonpath(resp_json, "$.songs[0].artists[*].name"),
-                'album_name': jsonpath.jsonpath(resp_json, "$.songs[0].album.name"),
+                'album_name': jsonpath.jsonpath(resp_json, "$.songs[0].album.name")[0],
                 'picUrl': jsonpath.jsonpath(resp_json, "$.songs[0].album.picUrl")[0],
             }
         else:
@@ -50,6 +50,39 @@ class NCMApi:
             }
 
         return song_info
+
+    def get_song_info_by_keyword(self, keyword):
+        api_url = f"https://163api.qijieya.cn/search?keywords={keyword}"
+        resp = requests.get(api_url).json()
+        songs = jsonpath.jsonpath(resp, "$.result.songs")[0]
+        length = len(songs)
+        for i in range(length):
+            song_name = jsonpath.jsonpath(resp, f"$.result.songs[{i}].name")[0]
+            song_artists = jsonpath.jsonpath(resp, f"$.result.songs[{i}].artists[*].name")
+            album_name = jsonpath.jsonpath(resp, f"$.result.songs[{i}].album.name")[0]
+            song_id = jsonpath.jsonpath(resp, f"$.result.songs[{i}].id")[0]
+            flag = True
+            if song_name in keyword:
+                for artist in song_artists:
+                    if artist not in keyword:
+                        flag = False
+            else:
+                flag = False
+            if flag:
+                # song_info = {
+                #     'status': 'success',
+                #     'name': song_name,
+                #     'artists': song_artists,
+                #     'album_name': album_name,
+                #     'picUrl':
+                # }
+                # return song_info
+                return self.get_song_info(song_id)
+        else:
+            song_info = {
+                'status': 'error'
+            }
+            return song_info
 
     def get_lyrics(self, song_id):
         lrc = requests.get(f"https://music.163.com/api/song/lyric?id={song_id}&lv=1&kv=1&tv=-1").json()
@@ -73,10 +106,12 @@ class NCMApi:
 
 if __name__ == '__main__':
     api = NCMApi()
-    playlist_id = input("Playlist id: ")
-    playlist = api.get_playlist_info(playlist_id)
-    playlist_name = playlist['name']
-    playlist_id = playlist['id']
-    playlist_creator = playlist['creator']
-    playlist_trackIds = playlist['trackIds']
-    print(playlist)
+    # playlist_id = input("Playlist id: ")
+    # playlist = api.get_playlist_info(playlist_id)
+    # playlist_name = playlist['name']
+    # playlist_id = playlist['id']
+    # playlist_creator = playlist['creator']
+    # playlist_trackIds = playlist['trackIds']
+    # print(playlist)
+    res = api.get_song_info_by_keyword("勿忘 - Awesome City Club")
+    print(res)
