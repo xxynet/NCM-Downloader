@@ -17,6 +17,7 @@ import metadata
 
 from api import NCMApi
 from config import VERSION, config_file
+from ncmdump import ncm_dump
 
 
 def formatted_print(type, text):
@@ -290,23 +291,36 @@ attempts = 1
 
 
 def main():
-    try:
-        list_url = input("歌单URL或ID：")
-        if list_url.isdigit():
-            playlist_id = list_url
-        else:
-            ids = re.findall(r'[?&]id=(\d+)', list_url)
-            if ids:
-                playlist_id = ids[0]
+    print("==================模式选择==================")
+    print("1.下载歌单                  2.ncm文件转mp3文件")
+    choice = input("请输入选项：")
+    if choice == "1":
+        try:
+            list_url = input("歌单URL或ID：")
+            if list_url.isdigit():
+                playlist_id = list_url
             else:
-                formatted_print('e', "未识别到有效的输入！")
-                time.sleep(3)
-                sys.exit(1)
-    except:
-        time.sleep(3)
-        sys.exit(1)
+                ids = re.findall(r'[?&]id=(\d+)', list_url)
+                if ids:
+                    playlist_id = ids[0]
+                else:
+                    formatted_print('e', "未识别到有效的输入！")
+                    time.sleep(3)
+                    sys.exit(1)
+        except:
+            time.sleep(3)
+            sys.exit(1)
 
-    download(playlist_id)
+        download(playlist_id)
+    elif choice == "2":
+        ncm_file_path = input("请输入ncm文件所在文件夹路径（留空则使用E:/CloudMusic/VipSongsDownload）：")
+        formatted_print('i', "开始转换")
+        if ncm_file_path:
+            converted_files = ncm_dump(ncm_file_path)
+        else:
+            converted_files = ncm_dump()
+        formatted_print('i', "已转换文件：")
+        print(converted_files)
 
 
 if __name__ == '__main__':
