@@ -321,6 +321,8 @@ def main():
             converted_files = ncm_dump()
         formatted_print('i', "已转换文件：")
         print(converted_files)
+        time.sleep(3)
+        sys.exit(1)
 
 
 if __name__ == '__main__':
