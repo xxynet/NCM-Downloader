@@ -22,14 +22,6 @@ def meta_data(path, name, artists, album, cover):
     response = requests.get(cover)
     image_data = response.content
 
-    # audio['APIC'] = APIC(
-    #     encoding=0,
-    #     mime='image/jpeg',
-    #     type=3,
-    #     desc=u'Cover',
-    #     data=image_data
-    # )
-
     audio.add(APIC(
         encoding=0,
         mime='image/jpeg',  # Change this if you know it's a different image type

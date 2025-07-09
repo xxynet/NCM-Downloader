@@ -69,14 +69,6 @@ class NCMApi:
             else:
                 flag = False
             if flag:
-                # song_info = {
-                #     'status': 'success',
-                #     'name': song_name,
-                #     'artists': song_artists,
-                #     'album_name': album_name,
-                #     'picUrl':
-                # }
-                # return song_info
                 return self.get_song_info(song_id)
         else:
             song_info = {
