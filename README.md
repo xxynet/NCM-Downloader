@@ -3,6 +3,9 @@ A powerful NCM Downloader that supports built-in metadata (title, artists, album
 
 一个强大的网易云下载工具，支持内嵌元信息（歌曲名，歌手，专辑，歌曲封面），暂时只支持下载歌单
 
+Try the latest [Docker version](https://github.com/xxynet/ncm-dl-docker) as well
+ 尝试最新的[Docker版本](https://github.com/xxynet/ncm-dl-docker)
+
 ![](./Screenshots/Screenshot12.png)
 
 <div align="center">
