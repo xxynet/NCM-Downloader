@@ -10,7 +10,7 @@ Try the latest [Docker version](https://github.com/xxynet/ncm-dl-docker) as well
 
 <div align="center">
 
-[Docs](https://ncm.xuxiny.top)
+[Docs](http://docs.xuxiny.top/ncm/)
 
 <a href="https://github.com/xxynet/NCM-Downloader/releases">
     <img src="https://img.shields.io/github/v/release/xxynet/NCM-Downloader" alt="latest version" />
