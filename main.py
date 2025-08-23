@@ -178,8 +178,8 @@ class Song:
         id = self.song_id
         artists_list = self.artists
         artists = ''
-        for j in artists_list:
-            artists += j + ","
+        for artist in artists_list:
+            artists += safe_name(artist) + ","
         artists = artists[:-1]
 
         cover = self.cover
