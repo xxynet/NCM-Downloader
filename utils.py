@@ -29,8 +29,12 @@ def safe_name(origin_name):
     return file_name
 
 
+def generate_file_name(name, artists):
+    return f"{name} - {artists}"
+
+
 def generate_file_path(base_path, name, artists, playlist_name):
-    return base_path + "/" + playlist_name + "/" + name + " - " + artists
+    return f"{base_path}/{playlist_name}/{name} - {artists}"
 
 
 def is_cookie_format_valid(cookie_str: str) -> bool:

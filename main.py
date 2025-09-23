@@ -47,7 +47,7 @@ class Song:
         else:
             formatted_print('e', "获取歌曲信息失败！")
 
-    def Download(self, playlist):
+    def download_song(self, playlist):
         global success_num
         name = safe_name(self.name) # illegal_chars = r'[\\/*?:"<>|]'
         id = self.song_id
@@ -66,31 +66,34 @@ class Song:
                 metadata.meta_data(full_path, name, artists_list, album, cover)
         else:
             success_num += 1
-            formatted_print('ok', name + " - " + artists + ".mp3  " + "already exist")
+            formatted_print('ok', f"{generate_file_name(name, artists)}.mp3  already exists")
 
     def music_down(self, playlist, id, name, artists):
         global success_num
-        print("Downloading " + name + " - " + artists + ".mp3", end='\r')
+
+        full_path = generate_file_path(global_config.music_path, name, artists, playlist.playlist_name)
+
+        print(f"Downloading {generate_file_name(name, artists)}.mp3", end='\r')
         try:
             is_succeed, audio_data = api.get_mp3_data(id)
 
             if is_succeed:
-                with open(generate_file_path(global_config.music_path, name, artists, playlist.playlist_name)+".mp3", "wb") as file:
+                with open(f"{full_path}.mp3", "wb") as file:
                     file.write(audio_data.content)
                 success_num += 1
-                formatted_print('ok', name + " - " + artists + ".mp3")
+                formatted_print('ok', f"{generate_file_name(name, artists)}.mp3")
             else:  # VIP
-                formatted_print('e', name + " - " + artists + ".mp3")
+                formatted_print('e', f"{generate_file_name(name, artists)}.mp3")
         except Exception as e:
             formatted_print('e', e)
         if global_config.lrc_enabled == '1':
             merged_lrc = metadata.merge_lrc(self.olrc, self.tlrc)
-            with open(generate_file_path(global_config.music_path, name, artists, playlist.playlist_name) + ".lrc", "w",
+            with open(f"{full_path}.lrc", "w",
                       encoding='utf-8') as file:
                 file.write(merged_lrc)
         elif global_config.lrc_enabled == '2' and is_succeed:
             merged_lrc = metadata.merge_lrc(self.olrc, self.tlrc)
-            metadata.builtin_lyrics(generate_file_path(global_config.music_path, name, artists, playlist.playlist_name) + ".mp3", merged_lrc)
+            metadata.builtin_lyrics(f"{full_path}.mp3", merged_lrc)
 
 
 class Playlist:
@@ -103,10 +106,10 @@ class Playlist:
         self.ids = None
         self.creator = None
 
-        self.fetch_playlist_data()
-        self.create_playlist_dir()
+        self._fetch_playlist_data()
+        self._create_playlist_dir()
 
-    def fetch_playlist_data(self):
+    def _fetch_playlist_data(self):
         try:
             playlist_info = api.get_playlist_info(self.playlist_id)
         except Exception as e:
@@ -131,7 +134,7 @@ class Playlist:
             formatted_print('e', f"请求失败！状态码：{playlist_info['status']}")
             sys.exit(1)
 
-    def create_playlist_dir(self):
+    def _create_playlist_dir(self):
         try:
             if not os.path.exists(self.download_path + "/" + self.playlist_name):
                 os.mkdir(self.download_path + "/" + self.playlist_name)
@@ -150,7 +153,7 @@ def download(playlist_id):
             song_id = downloader.ids[i]
             song = Song(song_id)
 
-            song.Download(downloader)
+            song.download_song(downloader)
 
         print(f"Total: {downloader.playlist_song_amount} Success: {success_num}")
         input("按回车键退出")
