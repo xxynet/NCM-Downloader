@@ -23,13 +23,14 @@ proj_logo = Fore.GREEN + """  _   _  _____ __  __   _____   ______          ___ 
 class Song:
 
     def __init__(self, song_id):
-        self.song_id = song_id
-        self.name = None
+        self.song_id: int = song_id
+        self.name: str
         self.artists = None
-        self.cover = None  # PicUrl
-        self.album = None  # album name
+        self.cover: str  # PicUrl
+        self.album: str  # album name
         self.olrc = None
         self.tlrc = None
+        self.is_succeed: bool = False
         self._get_song_info()
 
     def _get_song_info(self):
@@ -47,8 +48,7 @@ class Song:
         else:
             formatted_print('e', "获取歌曲信息失败！")
 
-    def download_song(self, playlist):
-        global success_num
+    def download_song(self, playlist_name):
         name = safe_name(self.name) # illegal_chars = r'[\\/*?:"<>|]'
         id = self.song_id
         artists_list = self.artists
@@ -59,80 +59,83 @@ class Song:
 
         cover = self.cover
         album = self.album
-        full_path = generate_file_path(global_config.music_path, name, artists, playlist.playlist_name) + ".mp3"
+        full_path = generate_file_path(global_config.music_path, name, artists, playlist_name) + ".mp3"
         if not os.path.exists(full_path):
-            self.music_down(playlist, id, name, artists)
+            self.music_down(playlist_name, id, name, artists)
             if os.path.exists(full_path):
                 metadata.meta_data(full_path, name, artists_list, album, cover)
         else:
-            success_num += 1
+            self.is_succeed = True
             formatted_print('ok', f"{generate_file_name(name, artists)}.mp3  already exists")
 
-    def music_down(self, playlist, id, name, artists):
-        global success_num
+    def music_down(self, playlist_name, id, name, artists):
 
-        full_path = generate_file_path(global_config.music_path, name, artists, playlist.playlist_name)
+        full_path = generate_file_path(global_config.music_path, name, artists, playlist_name)
 
         print(f"Downloading {generate_file_name(name, artists)}.mp3", end='\r')
         try:
-            is_succeed, audio_data = api.get_mp3_data(id)
+            is_api_succeed, audio_data = api.get_mp3_data(id)
 
-            if is_succeed:
+            if is_api_succeed:
                 with open(f"{full_path}.mp3", "wb") as file:
                     file.write(audio_data.content)
-                success_num += 1
+                self.is_succeed = True
                 formatted_print('ok', f"{generate_file_name(name, artists)}.mp3")
+
+                # download lyrics
+                if global_config.lrc_enabled == '1':
+                    merged_lrc = metadata.merge_lrc(self.olrc, self.tlrc)
+                    with open(f"{full_path}.lrc", "w",
+                              encoding='utf-8') as file:
+                        file.write(merged_lrc)
+                elif global_config.lrc_enabled == '2' and is_api_succeed:
+                    merged_lrc = metadata.merge_lrc(self.olrc, self.tlrc)
+                    metadata.builtin_lyrics(f"{full_path}.mp3", merged_lrc)
             else:  # VIP
                 formatted_print('e', f"{generate_file_name(name, artists)}.mp3")
         except Exception as e:
             formatted_print('e', e)
-        if global_config.lrc_enabled == '1':
-            merged_lrc = metadata.merge_lrc(self.olrc, self.tlrc)
-            with open(f"{full_path}.lrc", "w",
-                      encoding='utf-8') as file:
-                file.write(merged_lrc)
-        elif global_config.lrc_enabled == '2' and is_succeed:
-            merged_lrc = metadata.merge_lrc(self.olrc, self.tlrc)
-            metadata.builtin_lyrics(f"{full_path}.mp3", merged_lrc)
 
 
 class Playlist:
 
     def __init__(self, playlist_id, download_path):
-        self.playlist_id = playlist_id
-        self.download_path = download_path
-        self.playlist_name = None
-        self.playlist_song_amount = None
-        self.ids = None
-        self.creator = None
+        self.playlist_id: int = playlist_id
+        self.download_path: str = download_path
+        self.playlist_name: str
+        self.playlist_song_amount: int
+        self.song_ids: list[int] = []
+        self.song_objects: list[Song] = []
+        self.creator: str
 
-        self._fetch_playlist_data()
+        self.success_num: int = 0
+
+        self._init_playlist()
         self._create_playlist_dir()
 
+    def _init_playlist(self):
+        max_attempts = 3
+        for attempt in range(max_attempts):
+            try:
+                self._fetch_playlist_data()
+                break
+            except Exception as e:
+                formatted_print('e', f"获取歌曲信息异常，错误信息：{str(e)}，正在重试")
+
     def _fetch_playlist_data(self):
-        try:
-            playlist_info = api.get_playlist_info(self.playlist_id)
-        except Exception as e:
-            formatted_print('e', f"获取歌曲信息异常，错误信息：{str(e)}，正在重试")
-            global attempts
-            attempts += 1
-            time.sleep(1)
-            download(self.playlist_id)
+        playlist_info = api.get_playlist_info(self.playlist_id)
 
         if playlist_info['status'] == "success":
-            self.playlist_name = safe_name(playlist_info['name']) # illegal_chars = r'[\\/*?:"<>|]'
+            self.playlist_name = safe_name(playlist_info['name'])  # illegal_chars = r'[\\/*?:"<>|]'
             self.playlist_id = playlist_info['id']
             self.playlist_song_amount = playlist_info['song_num']
             self.creator = playlist_info['creator']
-            self.ids = playlist_info['trackIds']
-
-            print("==================下载前确认==================")
-            print(f"歌单名称：{self.playlist_name}    歌单ID：{self.playlist_id}")
-            print(f"歌曲数量：{self.playlist_song_amount}      创建者：{self.creator}")
-            input("按回车键继续")
+            self.song_ids = playlist_info['trackIds']
         else:
             formatted_print('e', f"请求失败！状态码：{playlist_info['status']}")
-            sys.exit(1)
+
+    # def _create_song_objects(self, song_id):
+    #     self.song_objects.append(Song(song_id))
 
     def _create_playlist_dir(self):
         try:
@@ -143,25 +146,22 @@ class Playlist:
             time.sleep(3)
             sys.exit(1)
 
+    def download_playlist(self):
+        print("==================下载前确认==================")
+        print(f"歌单名称：{self.playlist_name}    歌单ID：{self.playlist_id}")
+        print(f"歌曲数量：{self.playlist_song_amount}      创建者：{self.creator}")
+        input("按回车键继续")
 
-def download(playlist_id):
-    global attempts, success_num
-    if attempts <= 3:
-        downloader = Playlist(playlist_id, global_config.music_path)
-
-        for i in range(downloader.playlist_song_amount):
-            song_id = downloader.ids[i]
+        for i in range(self.playlist_song_amount):
+            song_id = self.song_ids[i]
             song = Song(song_id)
+            song.download_song(self.playlist_name)
+            if song.is_succeed:
+                self.success_num += 1
 
-            song.download_song(downloader)
-
-        print(f"Total: {downloader.playlist_song_amount} Success: {success_num}")
+        print(f"Total: {self.playlist_song_amount} Success: {self.success_num}")
         input("按回车键退出")
         time.sleep(0.5)
-        sys.exit(1)
-    else:
-        formatted_print('e', "获取失败，请重新运行本程序")
-        time.sleep(3)
         sys.exit(1)
 
 
@@ -178,11 +178,13 @@ def choice_download_playlist():
                 formatted_print('e', "未识别到有效的输入！")
                 time.sleep(3)
                 sys.exit(1)
-    except:
+
+        playlist = Playlist(playlist_id, global_config.music_path)
+        playlist.download_playlist()
+    except Exception as e:
+        formatted_print('e', f"发生错误：{str(e)}")
         time.sleep(3)
         sys.exit(1)
-
-    download(playlist_id)
 
 
 def choice_ncm_to_mp3():
@@ -241,7 +243,7 @@ if __name__ == '__main__':
 
     # print project info
     print("Github: https://github.com/xxynet/NCM-Downloader")
-    print("Docs: https://ncm.xuxiny.top/")
+    print("Docs: https://docs.xuxiny.top/ncm/")
     print("Made by Caleb XXY with ❤")
     print(f"当前版本：{VERSION}")
 
@@ -260,9 +262,6 @@ if __name__ == '__main__':
                     formatted_print('i', "已是最新版本！")
         except Exception as e:
             formatted_print('e', e)
-
-    attempts = 1
-    success_num = 0
 
     api = NCMApi(global_config.cookie)
 
