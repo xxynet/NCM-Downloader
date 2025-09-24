@@ -72,6 +72,7 @@ def get_latest_release(owner, repo):
 class Config:
     def __init__(self):
         self.music_path: Union[str, None] = None
+        self.ncm_path: Union[str, None] = None
         self.filename_format: Union[str, None] = None
         self.lrc_enabled: Union[str, None] = None
         self.detect_update: Union[bool, None] = None
@@ -110,6 +111,9 @@ class Config:
             path = config.get('output', 'path')
             if path == '':
                 self.music_path = os.getcwd()
+
+            self.ncm_path = config.get('output', 'ncm_path')
+
             self.filename_format = config.get('output', 'filename')
 
             self.lrc_enabled = config.get('output', 'lrc')

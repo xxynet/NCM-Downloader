@@ -9,7 +9,7 @@ import metadata
 
 from utils import *
 from api import NCMApi
-from ncmdump import ncm_dump
+from ncmdump import dump as dump_ncm
 
 proj_logo = Fore.GREEN + """  _   _  _____ __  __   _____   ______          ___   _ _      ____          _____  ______ _____  
  | \ | |/ ____|  \/  | |  __ \ / __ \ \        / / \ | | |    / __ \   /\   |  __ \|  ____|  __ \ 
@@ -188,14 +188,19 @@ def choice_download_playlist():
 
 
 def choice_ncm_to_mp3():
-    ncm_file_path = input("请输入ncm文件所在文件夹路径（留空则使用E:/CloudMusic/VipSongsDownload）：")
+    ncm_file_path = input("请输入ncm文件所在文件夹路径（留空则使用配置文件中的默认路径）：")
     formatted_print('i', "开始转换")
-    if ncm_file_path:
-        converted_files = ncm_dump(ncm_file_path)
-    else:
-        converted_files = ncm_dump()
-    formatted_print('i', "已转换文件：")
-    print(converted_files)
+    if not ncm_file_path:
+        ncm_file_path = global_config.ncm_path
+    ncm_files = [f for f in os.listdir(ncm_file_path) if f.endswith(".ncm")]
+    for file in ncm_files:
+        filepath = f"{ncm_file_path}/{file}"
+        try:
+            dump_ncm(filepath)
+            formatted_print('ok', file)
+        except Exception as e:
+            formatted_print('e', file)
+            print(f"转换时发生错误：{str(e)}")
     input("按回车键退出")
     time.sleep(0.5)
     sys.exit(1)

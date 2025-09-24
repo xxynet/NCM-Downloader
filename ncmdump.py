@@ -79,7 +79,7 @@ def dump(file_path):
 def ncm_dump(path='E:/CloudMusic/VipSongsDownload'):
     ncm_files = [f for f in os.listdir(path) if f.endswith(".ncm")]
     for file in ncm_files:
-        filepath = path + "/" + file
+        filepath = f"{path}/{file}"
         dump(filepath)
     return ncm_files
 
@@ -88,5 +88,4 @@ if __name__ == '__main__':
     folder = 'E:/CloudMusic/VipSongsDownload'
     ncm_files = [f for f in os.listdir(folder) if f.endswith(".ncm")]
     for file in ncm_files:
-        filepath = file
-        dump(filepath)
+        dump(file)
