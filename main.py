@@ -22,76 +22,77 @@ proj_logo = Fore.GREEN + """  _   _  _____ __  __   _____   ______          ___ 
 
 class Song:
 
-    def __init__(self, song_id):
+    def __init__(self, playlist_name, song_id):
+        self.playlist_name: str = playlist_name
         self.song_id: int = song_id
         self.name: str
+        self.safe_name: str
         self.artists: list = []
+        self.artists_str: str = ""
         self.cover: str  # PicUrl
         self.album: str  # album name
         self.olrc: str  # original lyrics
         self.tlrc: str  # translation lyrics
-        self.is_succeed: bool = False
+        self.full_path: str  # full path w/o extension
+        self.success: bool = False
         self._get_song_info()
 
     def _get_song_info(self):
         song_info = api.get_song_info(self.song_id)
         if song_info['status'] == "success":
             self.name = song_info['name']
+            self.safe_name = safe_name(self.name)  # illegal_chars = r'[\\/*?:"<>|]'
+
             self.artists = song_info['artists']
+
+            for artist in self.artists:
+                self.artists_str += safe_name(artist) + ","
+            self.artists_str = self.artists_str[:-1]
+
             self.cover = song_info['picUrl']
             self.album = song_info['album_name']  # album name
+            self.full_path = generate_file_path(global_config.music_path, self.safe_name, self.artists_str, self.playlist_name)
             if global_config.lrc_enabled != "0":
                 try:
                     self.olrc, self.tlrc = api.get_lyrics(self.song_id)
                 except Exception as e:
-                    formatted_print('e', e)
+                    formatted_print('e', f"获取歌词时出错：{str(e)}")
         else:
             formatted_print('e', "获取歌曲信息失败！")
 
-    def download_song(self, playlist_name):
-        name = safe_name(self.name) # illegal_chars = r'[\\/*?:"<>|]'
-        artists_list = self.artists
-        artists = ''
-        for artist in artists_list:
-            artists += safe_name(artist) + ","
-        artists = artists[:-1]
+    def _download_audio(self):
+        api_success, audio_data = api.get_mp3_data(self.song_id)
 
-        full_path = generate_file_path(global_config.music_path, name, artists, playlist_name) + ".mp3"
-        if not os.path.exists(full_path):
-            self.music_down(playlist_name, self.song_id, name, artists)
-            if os.path.exists(full_path):
-                metadata.meta_data(full_path, name, artists_list, self.album, self.cover)
+        if api_success:
+            with open(f"{self.full_path}.mp3", "wb") as file:
+                file.write(audio_data.content)
+            self.success = True
+            formatted_print('ok', f"{generate_file_name(self.name, self.artists_str)}.mp3")
+
+            # download lyrics
+            self._download_lyrics()
+        else:  # VIP
+            formatted_print('e', f"{generate_file_name(self.name, self.artists_str)}.mp3")
+
+    def _download_lyrics(self):
+        if global_config.lrc_enabled == '1':
+            merged_lrc = metadata.merge_lrc(self.olrc, self.tlrc)
+            with open(f"{self.full_path}.lrc", "w",
+                      encoding='utf-8') as file:
+                file.write(merged_lrc)
+        elif global_config.lrc_enabled == '2':
+            merged_lrc = metadata.merge_lrc(self.olrc, self.tlrc)
+            metadata.builtin_lyrics(f"{self.full_path}.mp3", merged_lrc)
+
+    def download_song(self):
+        if not os.path.exists(f"{self.full_path}.mp3"):
+            print(f"Downloading {generate_file_name(self.name, self.artists_str)}.mp3", end='\r')
+            self._download_audio()
+            if os.path.exists(f"{self.full_path}.mp3"):
+                metadata.meta_data(f"{self.full_path}.mp3", self.name, self.artists, self.album, self.cover)
         else:
-            self.is_succeed = True
-            formatted_print('ok', f"{generate_file_name(name, artists)}.mp3  already exists")
-
-    def music_down(self, playlist_name, song_id, name, artists):
-
-        full_path = generate_file_path(global_config.music_path, name, artists, playlist_name)
-
-        print(f"Downloading {generate_file_name(name, artists)}.mp3", end='\r')
-        try:
-            is_api_succeed, audio_data = api.get_mp3_data(song_id)
-
-            if is_api_succeed:
-                with open(f"{full_path}.mp3", "wb") as file:
-                    file.write(audio_data.content)
-                self.is_succeed = True
-                formatted_print('ok', f"{generate_file_name(name, artists)}.mp3")
-
-                # download lyrics
-                if global_config.lrc_enabled == '1':
-                    merged_lrc = metadata.merge_lrc(self.olrc, self.tlrc)
-                    with open(f"{full_path}.lrc", "w",
-                              encoding='utf-8') as file:
-                        file.write(merged_lrc)
-                elif global_config.lrc_enabled == '2' and is_api_succeed:
-                    merged_lrc = metadata.merge_lrc(self.olrc, self.tlrc)
-                    metadata.builtin_lyrics(f"{full_path}.mp3", merged_lrc)
-            else:  # VIP
-                formatted_print('e', f"{generate_file_name(name, artists)}.mp3")
-        except Exception as e:
-            formatted_print('e', e)
+            self.success = True
+            formatted_print('ok', f"{generate_file_name(self.name, self.artists_str)}.mp3  already exists")
 
 
 class Playlist:
@@ -151,9 +152,9 @@ class Playlist:
 
         for i in range(self.playlist_song_amount):
             song_id = self.song_ids[i]
-            song = Song(song_id)
-            song.download_song(self.playlist_name)
-            if song.is_succeed:
+            song = Song(self.playlist_name, song_id)
+            song.download_song()
+            if song.success:
                 self.success_num += 1
 
         print(f"Total: {self.playlist_song_amount} Success: {self.success_num}")
@@ -210,8 +211,8 @@ def choice_music_metadata():
         mp3_files = [f for f in os.listdir(music_file_path) if f.endswith(".mp3")]
         for mp3_file in mp3_files:
             song_info = api.get_song_info_by_keyword(mp3_file[:-4])
-            is_succeed = song_info['status']
-            if is_succeed == "success":
+            api_success = song_info['status']
+            if api_success == "success":
                 metadata.meta_data(music_file_path + "/" + mp3_file, song_info["name"], song_info["artists"],
                                    song_info["album_name"], song_info["picUrl"])
                 formatted_print('ok', mp3_file)
@@ -264,7 +265,7 @@ if __name__ == '__main__':
                 else:
                     formatted_print('i', "已是最新版本！")
         except Exception as e:
-            formatted_print('e', e)
+            formatted_print('e', str(e))
 
     # cookie
     if global_config.cookie:
