@@ -1,6 +1,6 @@
 import configparser
 
-VERSION = 'v2.2.2'
+VERSION = 'v2.3.0'
 
 config_file = '''[output]
 
@@ -10,7 +10,7 @@ path =
 #默认ncm文件查找路径
 ncm_path = E:/CloudMusic/VipSongsDownload
 
-#0->歌名-歌手 1->歌手-歌名 2->歌名（暂时无效）
+#0->歌名-歌手 1->歌手-歌名
 filename = 0
 
 #是否下载歌词 1 -> 下载LRC歌词文件  2 -> 内嵌歌词  0 -> False

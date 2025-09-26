@@ -30,11 +30,17 @@ def safe_name(origin_name):
 
 
 def generate_file_name(name, artists):
-    return f"{name} - {artists}"
+    if global_config.filename_format == "0":
+        return f"{name} - {artists}"
+    elif global_config.filename_format == "1":
+        return f"{artists} - {name}"
 
 
 def generate_file_path(base_path, name, artists, playlist_name):
-    return f"{base_path}/{playlist_name}/{name} - {artists}"
+    if global_config.filename_format == "0":
+        return f"{base_path}/{playlist_name}/{name} - {artists}"
+    elif global_config.filename_format == "1":
+        return f"{base_path}/{playlist_name}/{artists} - {name}"
 
 
 def is_cookie_format_valid(cookie_str: str) -> bool:
@@ -123,18 +129,21 @@ class Config:
             with open("cookie.txt", "r") as cookie_file:
                 self.cookie = cookie_file.read().strip()
 
-            if self.cookie:
-                if is_cookie_format_valid(self.cookie):
-                    formatted_print('ok', "Cookie已注入")
-                else:
-                    formatted_print('e', "不合法的Cookie")
-                    time.sleep(3)
-                    sys.exit(1)
-            else:
-                formatted_print('w', "未注入Cookie")
+            # if self.cookie:
+            #     if is_cookie_format_valid(self.cookie):
+            #         formatted_print('ok', "Cookie已注入")
+            #     else:
+            #         formatted_print('e', "不合法的Cookie")
+            #         time.sleep(3)
+            #         sys.exit(1)
+            # else:
+            #     formatted_print('w', "未注入Cookie")
 
         except Exception as e:
             print(e)
             formatted_print('e', "读取配置文件失败")
             time.sleep(3)
             sys.exit(1)
+
+
+global_config = Config()

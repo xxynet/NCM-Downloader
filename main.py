@@ -25,11 +25,11 @@ class Song:
     def __init__(self, song_id):
         self.song_id: int = song_id
         self.name: str
-        self.artists = None
+        self.artists: list = []
         self.cover: str  # PicUrl
         self.album: str  # album name
-        self.olrc = None
-        self.tlrc = None
+        self.olrc: str  # original lyrics
+        self.tlrc: str  # translation lyrics
         self.is_succeed: bool = False
         self._get_song_info()
 
@@ -50,31 +50,28 @@ class Song:
 
     def download_song(self, playlist_name):
         name = safe_name(self.name) # illegal_chars = r'[\\/*?:"<>|]'
-        id = self.song_id
         artists_list = self.artists
         artists = ''
         for artist in artists_list:
             artists += safe_name(artist) + ","
         artists = artists[:-1]
 
-        cover = self.cover
-        album = self.album
         full_path = generate_file_path(global_config.music_path, name, artists, playlist_name) + ".mp3"
         if not os.path.exists(full_path):
-            self.music_down(playlist_name, id, name, artists)
+            self.music_down(playlist_name, self.song_id, name, artists)
             if os.path.exists(full_path):
-                metadata.meta_data(full_path, name, artists_list, album, cover)
+                metadata.meta_data(full_path, name, artists_list, self.album, self.cover)
         else:
             self.is_succeed = True
             formatted_print('ok', f"{generate_file_name(name, artists)}.mp3  already exists")
 
-    def music_down(self, playlist_name, id, name, artists):
+    def music_down(self, playlist_name, song_id, name, artists):
 
         full_path = generate_file_path(global_config.music_path, name, artists, playlist_name)
 
         print(f"Downloading {generate_file_name(name, artists)}.mp3", end='\r')
         try:
-            is_api_succeed, audio_data = api.get_mp3_data(id)
+            is_api_succeed, audio_data = api.get_mp3_data(song_id)
 
             if is_api_succeed:
                 with open(f"{full_path}.mp3", "wb") as file:
@@ -252,8 +249,9 @@ if __name__ == '__main__':
     print("Made by Caleb XXY with ❤")
     print(f"当前版本：{VERSION}")
 
-    global_config = Config()
+    # global_config = Config()
 
+    # update
     if global_config.detect_update:
         formatted_print('i', "正在检查更新...")
         try:
@@ -267,6 +265,17 @@ if __name__ == '__main__':
                     formatted_print('i', "已是最新版本！")
         except Exception as e:
             formatted_print('e', e)
+
+    # cookie
+    if global_config.cookie:
+        if is_cookie_format_valid(global_config.cookie):
+            formatted_print('ok', "Cookie已注入")
+        else:
+            formatted_print('e', "不合法的Cookie")
+            time.sleep(3)
+            sys.exit(1)
+    else:
+        formatted_print('w', "未注入Cookie")
 
     api = NCMApi(global_config.cookie)
 
