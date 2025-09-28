@@ -12,15 +12,22 @@ from config import VERSION, config_file
 init() # colorma
 
 
-def formatted_print(info_type, text):
+def formatted_print(info_type, text, overwrite=False):
+
+    output_text = ""
     if info_type == 'e':
-        print("[" + Fore.RED + "E" + Style.RESET_ALL + "] " + text)
+        output_text = "[" + Fore.RED + "E" + Style.RESET_ALL + "] " + text
     elif info_type == 'ok':
-        print("[" + Fore.GREEN + "OK" + Style.RESET_ALL + "] " + text)
+        output_text = "[" + Fore.GREEN + "OK" + Style.RESET_ALL + "] " + text
     elif info_type == 'i':
-        print("[" + Fore.CYAN + "INFO" + Style.RESET_ALL + "] " + text)
+        output_text = "[" + Fore.CYAN + "INFO" + Style.RESET_ALL + "] " + text
     elif info_type == 'w':
-        print("[" + Fore.YELLOW + "WARN" + Style.RESET_ALL + "] " + text)
+        output_text = "[" + Fore.YELLOW + "WARN" + Style.RESET_ALL + "] " + text
+
+    if overwrite:
+        print(f"\r{output_text}")
+    else:
+        print(output_text)
 
 
 def safe_name(origin_name):

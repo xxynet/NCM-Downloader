@@ -67,12 +67,14 @@ class Song:
             with open(f"{self.full_path}.mp3", "wb") as file:
                 file.write(audio_data.content)
             self.success = True
-            formatted_print('ok', f"{generate_file_name(self.name, self.artists_str)}.mp3")
+            sys.stdout.write("\r" + " " * 50)   # 清空
+            formatted_print('ok', f"{generate_file_name(self.name, self.artists_str)}.mp3", True)
 
             # download lyrics
             self._download_lyrics()
         else:  # VIP
-            formatted_print('e', f"{generate_file_name(self.name, self.artists_str)}.mp3")
+            sys.stdout.write("\r" + " " * 50)   # 清空
+            formatted_print('e', f"{generate_file_name(self.name, self.artists_str)}.mp3", True)
 
     def _download_lyrics(self):
         if global_config.lrc_enabled == '1':
@@ -84,15 +86,15 @@ class Song:
             merged_lrc = metadata.merge_lrc(self.olrc, self.tlrc)
             metadata.builtin_lyrics(f"{self.full_path}.mp3", merged_lrc)
 
-    def download_song(self):
+    def download(self):
         if not os.path.exists(f"{self.full_path}.mp3"):
-            print(f"Downloading {generate_file_name(self.name, self.artists_str)}.mp3", end='\r')
+            print(f"Downloading {generate_file_name(self.name, self.artists_str)}.mp3", end='', flush=True)
             self._download_audio()
             if os.path.exists(f"{self.full_path}.mp3"):
                 metadata.meta_data(f"{self.full_path}.mp3", self.name, self.artists, self.album, self.cover)
         else:
             self.success = True
-            formatted_print('ok', f"{generate_file_name(self.name, self.artists_str)}.mp3  already exists")
+            formatted_print('ok', f"{generate_file_name(self.name, self.artists_str)}.mp3  already exists", True)
 
 
 class Playlist:
@@ -153,7 +155,7 @@ class Playlist:
         for i in range(self.playlist_song_amount):
             song_id = self.song_ids[i]
             song = Song(self.playlist_name, song_id)
-            song.download_song()
+            song.download()
             if song.success:
                 self.success_num += 1
 
