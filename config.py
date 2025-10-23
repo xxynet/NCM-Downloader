@@ -1,6 +1,6 @@
 import configparser
 
-VERSION = 'v2.3.1'
+VERSION = 'v2.4.0'
 
 config_file = '''[output]
 
