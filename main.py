@@ -152,6 +152,8 @@ class Playlist:
         print(f"歌曲数量：{self.playlist_song_amount}      创建者：{self.creator}")
         input("按回车键继续")
 
+        formatted_print('i', "开始下载")
+
         for i in range(self.playlist_song_amount):
             song_id = self.song_ids[i]
             song = Song(self.playlist_name, song_id)
@@ -160,9 +162,8 @@ class Playlist:
                 self.success_num += 1
 
         print(f"Total: {self.playlist_song_amount} Success: {self.success_num}")
-        input("按回车键退出")
+        formatted_print('i', "下载结束")
         time.sleep(0.5)
-        sys.exit(1)
 
 
 def choice_download_playlist():
@@ -201,9 +202,8 @@ def choice_ncm_to_mp3():
         except Exception as e:
             formatted_print('e', file)
             print(f"转换时发生错误：{str(e)}")
-    input("按回车键退出")
+    formatted_print('i', "转换结束")
     time.sleep(0.5)
-    sys.exit(1)
 
 
 def choice_music_metadata():
@@ -220,9 +220,8 @@ def choice_music_metadata():
                 formatted_print('ok', mp3_file)
             else:
                 formatted_print('e', mp3_file)
-        input("按回车键退出")
+        formatted_print('i', "刮削结束")
         time.sleep(0.5)
-        sys.exit(1)
     else:
         formatted_print('e', "请输入有效的路径")
         time.sleep(3)
@@ -230,16 +229,17 @@ def choice_music_metadata():
 
 
 def main():
-    print("==================模式选择==================")
-    print("1.下载歌单                  2.ncm文件转mp3文件")
-    print("3.音乐刮削")
-    choice = input("请输入选项：")
-    if choice == "1":
-        choice_download_playlist()
-    elif choice == "2":
-        choice_ncm_to_mp3()
-    elif choice == "3":
-        choice_music_metadata()
+    while True:
+        print("==================模式选择==================")
+        print("1.下载歌单                  2.ncm文件转mp3文件")
+        print("3.音乐刮削")
+        choice = input("请输入选项：")
+        if choice == "1":
+            choice_download_playlist()
+        elif choice == "2":
+            choice_ncm_to_mp3()
+        elif choice == "3":
+            choice_music_metadata()
 
 
 if __name__ == '__main__':
