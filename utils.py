@@ -92,6 +92,8 @@ class Config:
 
         self.cookie: Union[str, None] = None
 
+        self.v_key_enabled: Union[bool, None] = None
+
         self._check_config_file()
         self._get_config()
 
@@ -132,6 +134,8 @@ class Config:
             self.lrc_enabled = config.get('output', 'lrc')
 
             self.detect_update = True if config.get('settings', 'detect-update') == "1" else False
+
+            self.v_key_enabled = True if config.get('v_key_api', 'enabled') == "true" else False
 
             with open("cookie.txt", "r") as cookie_file:
                 self.cookie = cookie_file.read().strip()

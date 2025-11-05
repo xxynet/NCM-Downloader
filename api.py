@@ -96,6 +96,48 @@ class NCMApi:
         return is_succeed, audio_data
 
 
+class VKeyApi:
+    def __init__(self):
+        self.desc = "落月API"
+
+    def get_song_info(self, song_id, quality=4):
+        """
+        可选值	音质
+        1	标准（64k）
+        2	标准（128k）
+        3	HQ极高（192k）
+        4	HQ极高（320k）
+        5	SQ无损
+        6	高解析度无损（Hi-Res）
+        7	高清臻音（Spatial Autio）
+        8	沉浸环绕声（Surround Autio）
+        9	超清母带（Master）
+        """
+        api_url = f"https://api.vkeys.cn/v2/music/netease?id={song_id}&quality={quality}"
+
+        try:
+            response = requests.get(api_url, timeout=15)
+            response.raise_for_status()
+
+            data = response.json()
+
+            # 检查响应状态
+            if data.get('code') != 200:
+                print(f"API错误: {data}")
+                return None
+
+                # 检查是否有有效的URL
+            if not data.get('data') or not data['data'].get('url'):
+                print("未获取到有效的音频URL")
+                return None
+
+            return data['data']
+
+        except requests.exceptions.RequestException as e:
+            print(f"请求失败: {e}")
+            return None
+
+
 if __name__ == '__main__':
     api = NCMApi()
     # playlist_id = input("Playlist id: ")

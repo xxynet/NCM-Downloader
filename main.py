@@ -8,7 +8,7 @@
 import metadata
 
 from utils import *
-from api import NCMApi
+from api import NCMApi, VKeyApi
 from ncmdump import dump as dump_ncm
 
 proj_logo = Fore.GREEN + """  _   _  _____ __  __   _____   ______          ___   _ _      ____          _____  ______ _____  
@@ -75,6 +75,26 @@ class Song:
         else:  # VIP
             sys.stdout.write("\r" + " " * 50)   # 清空
             formatted_print('e', f"{generate_file_name(self.name, self.artists_str)}.mp3", True)
+
+            # vkey api
+
+            if global_config.v_key_enabled:
+
+                formatted_print('i', "尝试使用第三方API解析...")
+                song_info = v_key_api.get_song_info(self.song_id)
+                if song_info:
+                    audio_url = song_info.get('url')
+
+                    audio_response = requests.get(audio_url)
+
+                    with open(f"{self.full_path}.mp3", "wb") as file:
+                        file.write(audio_response.content)
+                    self.success = True
+                    sys.stdout.write("\r" + " " * 50)  # 清空
+                    formatted_print('ok', f"{generate_file_name(self.name, self.artists_str)}.mp3", True)
+
+                    # download lyrics
+                    self._download_lyrics()
 
     def _download_lyrics(self):
         if global_config.lrc_enabled == '1':
@@ -281,5 +301,6 @@ if __name__ == '__main__':
         formatted_print('w', "未注入Cookie")
 
     api = NCMApi(global_config.cookie)
+    v_key_api = VKeyApi()
 
     main()
