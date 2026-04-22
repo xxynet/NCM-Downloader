@@ -52,29 +52,34 @@ class NCMApi:
         return song_info
 
     def get_song_info_by_keyword(self, keyword):
-        api_url = f"https://163api.qijieya.cn/search?keywords={keyword}"
-        resp = requests.get(api_url).json()
-        songs = jsonpath.jsonpath(resp, "$.result.songs")[0]
-        length = len(songs)
-        for i in range(length):
-            song_name = jsonpath.jsonpath(resp, f"$.result.songs[{i}].name")[0]
-            song_artists = jsonpath.jsonpath(resp, f"$.result.songs[{i}].artists[*].name")
-            album_name = jsonpath.jsonpath(resp, f"$.result.songs[{i}].album.name")[0]
-            song_id = jsonpath.jsonpath(resp, f"$.result.songs[{i}].id")[0]
-            flag = True
-            if song_name in keyword:
-                for artist in song_artists:
-                    if artist not in keyword:
-                        flag = False
+        try:
+            api_url = f"https://163api.qijieya.cn/search?keywords={keyword}"
+            resp = requests.get(api_url)
+            resp.raise_for_status()
+            resp_json = resp.json()
+            songs = jsonpath.jsonpath(resp_json, "$.result.songs")
+            if not songs:
+                return {'status': 'error'}
+            songs = songs[0]
+            length = len(songs)
+            for i in range(length):
+                song_name = jsonpath.jsonpath(resp_json, f"$.result.songs[{i}].name")[0]
+                song_artists = jsonpath.jsonpath(resp_json, f"$.result.songs[{i}].artists[*].name")
+                album_name = jsonpath.jsonpath(resp_json, f"$.result.songs[{i}].album.name")[0]
+                song_id = jsonpath.jsonpath(resp_json, f"$.result.songs[{i}].id")[0]
+                flag = True
+                if song_name in keyword:
+                    for artist in song_artists:
+                        if artist not in keyword:
+                            flag = False
+                else:
+                    flag = False
+                if flag:
+                    return self.get_song_info(song_id)
             else:
-                flag = False
-            if flag:
-                return self.get_song_info(song_id)
-        else:
-            song_info = {
-                'status': 'error'
-            }
-            return song_info
+                return {'status': 'error'}
+        except Exception:
+            return {'status': 'error'}
 
     def get_lyrics(self, song_id):
         lrc = requests.get(f"https://music.163.com/api/song/lyric?id={song_id}&lv=1&kv=1&tv=-1").json()

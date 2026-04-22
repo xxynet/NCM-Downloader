@@ -5,19 +5,24 @@
 
 # pyinstaller -F main.py -i music.ico
 
+from rich.panel import Panel
+from rich.table import Table
+from rich import box
+
 import metadata
 
 from utils import *
 from api import NCMApi, VKeyApi
 from ncmdump import dump as dump_ncm
 
-proj_logo = Fore.GREEN + """  _   _  _____ __  __   _____   ______          ___   _ _      ____          _____  ______ _____  
+proj_logo = r"""
+  _   _  _____ __  __   _____   ______          ___   _ _      ____          _____  ______ _____  
  | \ | |/ ____|  \/  | |  __ \ / __ \ \        / / \ | | |    / __ \   /\   |  __ \|  ____|  __ \ 
  |  \| | |    | \  / | | |  | | |  | \ \  /\  / /|  \| | |   | |  | | /  \  | |  | | |__  | |__) |
  | . ` | |    | |\/| | | |  | | |  | |\ \/  \/ / | . ` | |   | |  | |/ /\ \ | |  | |  __| |  _  / 
  | |\  | |____| |  | | | |__| | |__| | \  /\  /  | |\  | |___| |__| / ____ \| |__| | |____| | \ \ 
  |_| \_|\_____|_|  |_| |_____/ \____/   \/  \/   |_| \_|______\____/_/    \_\_____/|______|_|  \_\\
-""" + Style.RESET_ALL
+"""
 
 
 class Song:
@@ -67,32 +72,22 @@ class Song:
             with open(f"{self.full_path}.mp3", "wb") as file:
                 file.write(audio_data.content)
             self.success = True
-            sys.stdout.write("\r" + " " * 50)   # 清空
-            formatted_print('ok', f"{generate_file_name(self.name, self.artists_str)}.mp3", True)
-
             # download lyrics
             self._download_lyrics()
         else:  # VIP
-            sys.stdout.write("\r" + " " * 50)   # 清空
-            formatted_print('e', f"{generate_file_name(self.name, self.artists_str)}.mp3", True)
+            self.success = False
 
             # vkey api
-
             if global_config.v_key_enabled:
-
                 formatted_print('i', "尝试使用第三方API解析...")
                 song_info = v_key_api.get_song_info(self.song_id)
                 if song_info:
                     audio_url = song_info.get('url')
-
                     audio_response = requests.get(audio_url)
 
                     with open(f"{self.full_path}.mp3", "wb") as file:
                         file.write(audio_response.content)
                     self.success = True
-                    sys.stdout.write("\r" + " " * 50)  # 清空
-                    formatted_print('ok', f"{generate_file_name(self.name, self.artists_str)}.mp3", True)
-
                     # download lyrics
                     self._download_lyrics()
 
@@ -107,14 +102,19 @@ class Song:
             metadata.builtin_lyrics(f"{self.full_path}.mp3", merged_lrc)
 
     def download(self):
+        file_name = generate_file_name(self.name, self.artists_str)
         if not os.path.exists(f"{self.full_path}.mp3"):
-            print(f"Downloading {generate_file_name(self.name, self.artists_str)}.mp3", end='', flush=True)
-            self._download_audio()
+            with console.status(f"[cyan]Downloading {file_name}.mp3[/cyan]"):
+                self._download_audio()
+            if self.success:
+                formatted_print('ok', f"{file_name}.mp3")
+            else:
+                formatted_print('e', f"{file_name}.mp3")
             if os.path.exists(f"{self.full_path}.mp3"):
                 metadata.meta_data(f"{self.full_path}.mp3", self.name, self.artists, self.album, self.cover)
         else:
             self.success = True
-            formatted_print('ok', f"{generate_file_name(self.name, self.artists_str)}.mp3  already exists", True)
+            formatted_print('ok', f"{file_name}.mp3  already exists")
 
 
 class Playlist:
@@ -167,10 +167,15 @@ class Playlist:
             sys.exit(1)
 
     def download_playlist(self):
-        print("==================下载前确认==================")
-        print(f"歌单名称：{self.playlist_name}    歌单ID：{self.playlist_id}")
-        print(f"歌曲数量：{self.playlist_song_amount}      创建者：{self.creator}")
-        input("按回车键继续")
+        table = Table(title="[bold green]下载前确认[/bold green]", box=box.ROUNDED, show_header=False, border_style="green")
+        table.add_column("属性", style="cyan")
+        table.add_column("值", style="green")
+        table.add_row("歌单名称", self.playlist_name)
+        table.add_row("歌单ID", str(self.playlist_id))
+        table.add_row("歌曲数量", str(self.playlist_song_amount))
+        table.add_row("创建者", self.creator)
+        console.print(table)
+        console.input("按回车键继续")
 
         formatted_print('i', "开始下载")
 
@@ -181,14 +186,14 @@ class Playlist:
             if song.success:
                 self.success_num += 1
 
-        print(f"Total: {self.playlist_song_amount} Success: {self.success_num}")
+        console.print(Panel(f"总计：[bold]{self.playlist_song_amount}[/bold] 首 | 成功：[bold green]{self.success_num}[/bold green] 首", title="[bold]下载结果[/bold]", border_style="green"))
         formatted_print('i', "下载结束")
         time.sleep(0.5)
 
 
 def choice_download_playlist():
     try:
-        list_url = input("歌单URL或ID：")
+        list_url = console.input("[bold cyan]歌单URL或ID：[/bold cyan]")
         if list_url.isdigit():
             playlist_id = list_url
         else:
@@ -209,37 +214,56 @@ def choice_download_playlist():
 
 
 def choice_ncm_to_mp3():
-    ncm_file_path = input("请输入ncm文件所在文件夹路径（留空则使用配置文件中的默认路径）：")
-    formatted_print('i', "开始转换")
+    ncm_file_path = console.input("[bold cyan]请输入ncm文件所在文件夹路径（留空则使用配置文件中的默认路径）：[/bold cyan]")
     if not ncm_file_path:
         ncm_file_path = global_config.ncm_path
     ncm_files = [f for f in os.listdir(ncm_file_path) if f.endswith(".ncm")]
+    if not ncm_files:
+        formatted_print('i', "未找到ncm文件")
+        return
     for file in ncm_files:
         filepath = f"{ncm_file_path}/{file}"
-        try:
-            dump_ncm(filepath)
+        with console.status(f"[cyan]Converting {file}[/cyan]"):
+            try:
+                dump_ncm(filepath)
+                ok = True
+            except Exception as e:
+                ok = False
+                error_msg = str(e)
+        if ok:
             formatted_print('ok', file)
-        except Exception as e:
+        else:
             formatted_print('e', file)
-            print(f"转换时发生错误：{str(e)}")
+            console.print(f"[bold red]转换时发生错误：{error_msg}[/bold red]")
     formatted_print('i', "转换结束")
     time.sleep(0.5)
 
 
 def choice_music_metadata():
-    music_file_path = input("请输需要刮削的音乐文件夹路径：")
+    music_file_path = console.input("[bold cyan]请输需要刮削的音乐文件夹路径：[/bold cyan]")
     if music_file_path:
-        formatted_print('i', "开始刮削")
         mp3_files = [f for f in os.listdir(music_file_path) if f.endswith(".mp3")]
+        if not mp3_files:
+            formatted_print('i', "未找到mp3文件")
+            return
         for mp3_file in mp3_files:
-            song_info = api.get_song_info_by_keyword(mp3_file[:-4])
-            api_success = song_info['status']
-            if api_success == "success":
-                metadata.meta_data(music_file_path + "/" + mp3_file, song_info["name"], song_info["artists"],
-                                   song_info["album_name"], song_info["picUrl"])
+            with console.status(f"[cyan]Scraping {mp3_file}[/cyan]"):
+                try:
+                    song_info = api.get_song_info_by_keyword(mp3_file[:-4])
+                    api_success = song_info['status']
+                    if api_success == "success":
+                        ok = metadata.meta_data(music_file_path + "/" + mp3_file, song_info["name"], song_info["artists"],
+                                           song_info["album_name"], song_info["picUrl"])
+                    else:
+                        ok = False
+                        err = "未匹配到歌曲"
+                except Exception as e:
+                    ok = False
+                    err = str(e)
+            if ok:
                 formatted_print('ok', mp3_file)
             else:
-                formatted_print('e', mp3_file)
+                formatted_print('e', f"{mp3_file} ({err})")
         formatted_print('i', "刮削结束")
         time.sleep(0.5)
     else:
@@ -250,10 +274,14 @@ def choice_music_metadata():
 
 def main():
     while True:
-        print("==================模式选择==================")
-        print("1.下载歌单                  2.ncm文件转mp3文件")
-        print("3.音乐刮削")
-        choice = input("请输入选项：")
+        table = Table(title="[bold blue]模式选择[/bold blue]", box=box.ROUNDED, show_header=False, border_style="blue")
+        table.add_column("选项", style="cyan", justify="center")
+        table.add_column("功能", style="green")
+        table.add_row("1", "下载歌单")
+        table.add_row("2", "ncm文件转mp3文件")
+        table.add_row("3", "音乐刮削")
+        console.print(table)
+        choice = console.input("[bold cyan]请输入选项：[/bold cyan]")
         if choice == "1":
             choice_download_playlist()
         elif choice == "2":
@@ -264,13 +292,14 @@ def main():
 
 if __name__ == '__main__':
     # print project logo
-    print(proj_logo)
+    console.print(Panel(f"[bold green]{proj_logo}[/bold green]", border_style="green"))
 
     # print project info
-    print("Github: https://github.com/xxynet/NCM-Downloader")
-    print("Docs: https://docs.xuxiny.top/ncm/")
-    print("Made by Caleb XXY with ❤")
-    print(f"当前版本：{VERSION}")
+    info_text = f"""[link=https://github.com/xxynet/NCM-Downloader]GitHub: https://github.com/xxynet/NCM-Downloader[/link]
+[link=https://docs.xuxiny.top/ncm/]Docs: https://docs.xuxiny.top/ncm/[/link]
+Made by Caleb XXY with [red]❤[/red]
+当前版本：[bold cyan]{VERSION}[/bold cyan]"""
+    console.print(Panel(info_text, title="[bold]关于[/bold]", border_style="cyan"))
 
     # global_config = Config()
 
@@ -303,4 +332,8 @@ if __name__ == '__main__':
     api = NCMApi(global_config.cookie)
     v_key_api = VKeyApi()
 
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        console.print("\n[bold yellow]用户中断，程序退出[/bold yellow]")
+        sys.exit(0)

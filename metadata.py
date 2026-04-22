@@ -6,31 +6,34 @@ import re
 
 # filepath, name, artists, album, cover_url
 def meta_data(path, name, artists, album, cover):
+    try:
+        audio = EasyMP3(path)
 
-    audio = EasyMP3(path)
+        audio["title"] = name
+        audio["artist"] = artists
+        audio["album"] = album
 
-    audio["title"] = name
-    audio["artist"] = artists
-    audio["album"] = album
+        audio.save()
 
-    audio.save()
+        audio = ID3(path)
 
-    audio = ID3(path)
+        audio.delall('APIC') # clear the image data
 
-    audio.delall('APIC') # clear the image data
+        response = requests.get(cover)
+        image_data = response.content
 
-    response = requests.get(cover)
-    image_data = response.content
+        audio.add(APIC(
+            encoding=0,
+            mime='image/jpeg',  # Change this if you know it's a different image type
+            type=3,  # 3 is for cover image
+            desc=u'Cover',
+            data=image_data
+        ))
 
-    audio.add(APIC(
-        encoding=0,
-        mime='image/jpeg',  # Change this if you know it's a different image type
-        type=3,  # 3 is for cover image
-        desc=u'Cover',
-        data=image_data
-    ))
-
-    audio.save()
+        audio.save()
+        return True
+    except Exception:
+        return False
 
 
 def parse_lrc(lrc):

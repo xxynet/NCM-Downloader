@@ -1,5 +1,9 @@
-from colorama import init, Fore, Style
 from typing import Union
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
+from rich import box
 import configparser
 import sys
 import time
@@ -9,25 +13,22 @@ import re
 
 from config import VERSION, config_file
 
-init() # colorma
+console = Console()
 
 
-def formatted_print(info_type, text, overwrite=False):
-
-    output_text = ""
+def formatted_print(info_type, text):
     if info_type == 'e':
-        output_text = "[" + Fore.RED + "E" + Style.RESET_ALL + "] " + text
+        output_text = f"[[bold red]E[/bold red]] {text}"
     elif info_type == 'ok':
-        output_text = "[" + Fore.GREEN + "OK" + Style.RESET_ALL + "] " + text
+        output_text = f"[[bold green]OK[/bold green]] {text}"
     elif info_type == 'i':
-        output_text = "[" + Fore.CYAN + "INFO" + Style.RESET_ALL + "] " + text
+        output_text = f"[[bold cyan]INFO[/bold cyan]] {text}"
     elif info_type == 'w':
-        output_text = "[" + Fore.YELLOW + "WARN" + Style.RESET_ALL + "] " + text
-
-    if overwrite:
-        print(f"\r{output_text}")
+        output_text = f"[[bold yellow]WARN[/bold yellow]] {text}"
     else:
-        print(output_text)
+        output_text = text
+
+    console.print(output_text)
 
 
 def safe_name(origin_name):
@@ -151,7 +152,7 @@ class Config:
             #     formatted_print('w', "未注入Cookie")
 
         except Exception as e:
-            print(e)
+            console.print(f"[red]{e}[/red]")
             formatted_print('e', "读取配置文件失败")
             time.sleep(3)
             sys.exit(1)

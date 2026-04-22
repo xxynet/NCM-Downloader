@@ -2,3 +2,4 @@ jsonpath==0.82
 mutagen==1.47.0
 pycryptodome==3.20.0
 Requests==2.32.4
+rich
