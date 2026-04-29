@@ -95,6 +95,9 @@ class Config:
 
         self.v_key_enabled: Union[bool, None] = None
 
+        self.xcvts_enabled: Union[bool, None] = None
+        self.xcvts_quality: Union[str, None] = None
+
         self._check_config_file()
         self._get_config()
 
@@ -126,7 +129,7 @@ class Config:
             config.read('config.ini', encoding='utf-8')
             path = config.get('output', 'path')
             if path == '':
-                self.music_path = os.getcwd()
+                self.music_path = f"{os.getcwd()}/music"
 
             self.ncm_path = config.get('output', 'ncm_path')
 
@@ -137,6 +140,9 @@ class Config:
             self.detect_update = True if config.get('settings', 'detect-update') == "1" else False
 
             self.v_key_enabled = True if config.get('v_key_api', 'enabled') == "true" else False
+
+            self.xcvts_enabled = True if config.get('xcvts_api', 'enabled') == "true" else False
+            self.xcvts_quality = config.get('xcvts_api', 'quality')
 
             with open("cookie.txt", "r") as cookie_file:
                 self.cookie = cookie_file.read().strip()

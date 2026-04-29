@@ -1,10 +1,10 @@
 import configparser
 
-VERSION = 'v2.6.0'
+VERSION = 'v2.7.0'
 
 config_file = '''[output]
 
-#设置歌单输出路径，如果为空则默认为程序所在目录（路径无需引号包裹）
+#设置歌单输出路径，如果为空则默认为程序所在目录的music目录下（路径无需引号包裹）
 path = 
 
 #默认ncm文件查找路径
@@ -25,4 +25,11 @@ detect-update = 1
 
 # 是否在下载歌曲失败时尝试使用第三方API下载，设置为 true 启用
 enabled = false
+
+[xcvts_api]
+
+# 是否在下载歌曲失败时尝试使用小尘API(波点音乐)下载，设置为 true 启用
+# 音质选项: 20201kmflac, 2000kflac, 320kmp3, 128kmp3, 48kaac, 192kogg, 100kogg
+enabled = false
+quality = 320kmp3
 '''

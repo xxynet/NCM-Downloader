@@ -3,7 +3,7 @@
 
 # 请打开config.ini配置文件配置相应信息
 
-# pyinstaller -F main.py -i music.ico
+# pyinstaller main.spec
 
 from rich.panel import Panel
 from rich.table import Table
@@ -12,7 +12,7 @@ from rich import box
 import metadata
 
 from utils import *
-from api import NCMApi, VKeyApi
+from api import NCMApi, VKeyApi, XcvtsApi
 from ncmdump import dump as dump_ncm
 
 proj_logo = r"""
@@ -79,7 +79,7 @@ class Song:
 
             # vkey api
             if global_config.v_key_enabled:
-                formatted_print('i', "尝试使用第三方API解析...")
+                formatted_print('i', "尝试使用落月API解析...")
                 song_info = v_key_api.get_song_info(self.song_id)
                 if song_info:
                     audio_url = song_info.get('url')
@@ -89,6 +89,25 @@ class Song:
                         file.write(audio_response.content)
                     self.success = True
                     # download lyrics
+                    self._download_lyrics()
+
+            # xcvts api (小尘API - 波点音乐)
+            if not self.success and global_config.xcvts_enabled:
+                formatted_print('i', "尝试使用小尘API(波点音乐)解析...")
+                keyword = f"{self.name} - {self.artists_str}"
+                success, audio_resp, song_data = xcvts_api.get_mp3_data(keyword, global_config.xcvts_quality)
+                if success and audio_resp:
+                    with open(f"{self.full_path}.mp3", "wb") as file:
+                        file.write(audio_resp.content)
+                    self.success = True
+                    # 尝试从 xcvts 获取歌词（如果官方歌词未获取到）
+                    if global_config.lrc_enabled != "0" and (not self.olrc or self.olrc.strip() == ''):
+                        try:
+                            xcvts_lrc = xcvts_api.get_lyrics(keyword)
+                            if xcvts_lrc:
+                                self.olrc = xcvts_lrc
+                        except Exception:
+                            pass
                     self._download_lyrics()
 
     def _download_lyrics(self):
@@ -119,7 +138,7 @@ class Song:
 
 class Playlist:
 
-    def __init__(self, playlist_id, download_path):
+    def __init__(self, playlist_id: int, download_path: str):
         self.playlist_id: int = playlist_id
         self.download_path: str = download_path
         self.playlist_name: str
@@ -331,6 +350,7 @@ Made by Caleb XXY with [red]❤[/red]
 
     api = NCMApi(global_config.cookie)
     v_key_api = VKeyApi()
+    xcvts_api = XcvtsApi()
 
     try:
         main()

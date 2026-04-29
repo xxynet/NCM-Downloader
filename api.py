@@ -143,6 +143,102 @@ class VKeyApi:
             return None
 
 
+class XcvtsApi:
+    """小尘API - 波点音乐点歌接口，作为备用音源"""
+
+    def __init__(self):
+        self.desc = "小尘API(波点音乐)"
+        self.base_url = "https://api.xcvts.cn/api/music/bdyy"
+        self.default_quality = "320kmp3"
+
+    def search_and_get_url(self, keyword, quality=None):
+        """
+        通过关键词搜索歌曲并获取音频URL
+
+        参数:
+            keyword: 搜索关键词（歌名/歌手名）
+            quality: 音质，可选值: 20201kmflac, 2000kflac, 320kmp3, 128kmp3, 48kaac, 192kogg, 100kogg
+        返回:
+            dict: {'name', 'artist', 'cover', 'play_url', 'lrc'} 或 None
+        """
+        params = {
+            'msg': keyword,
+            'n': 1,
+            'type': 'json',
+        }
+        if quality:
+            params['br'] = quality
+        else:
+            params['br'] = self.default_quality
+
+        try:
+            response = requests.get(self.base_url, params=params, timeout=15)
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get('code') != 200:
+                print(f"小尘API错误: {data}")
+                return None
+
+            song_data = data.get('data')
+            if not song_data or not song_data.get('play_url'):
+                print("小尘API: 未获取到有效的音频URL")
+                return None
+
+            return song_data
+
+        except requests.exceptions.RequestException as e:
+            print(f"小尘API请求失败: {e}")
+            return None
+
+    def get_lyrics(self, keyword):
+        """
+        通过关键词获取歌词
+
+        参数:
+            keyword: 搜索关键词
+        返回:
+            str: 歌词文本，失败返回 None
+        """
+        params = {
+            'msg': keyword,
+            'n': 1,
+            'type': 'lyric',
+        }
+        try:
+            response = requests.get(self.base_url, params=params, timeout=15)
+            response.raise_for_status()
+            return response.text
+        except requests.exceptions.RequestException as e:
+            print(f"小尘API歌词请求失败: {e}")
+            return None
+
+    def get_mp3_data(self, keyword, quality=None):
+        """
+        通过关键词搜索并下载音频数据
+
+        参数:
+            keyword: 搜索关键词
+            quality: 音质
+        返回:
+            tuple: (is_success, audio_response, song_data_or_none)
+        """
+        song_data = self.search_and_get_url(keyword, quality)
+        if not song_data:
+            return False, None, None
+
+        audio_url = song_data.get('play_url')
+        try:
+            audio_response = requests.get(audio_url, timeout=30)
+            content_type = audio_response.headers.get('Content-Type', '')
+            if 'text/html' in content_type or audio_response.status_code != 200:
+                return False, None, None
+            return True, audio_response, song_data
+        except requests.exceptions.RequestException as e:
+            print(f"小尘API下载失败: {e}")
+            return False, None, None
+
+
 if __name__ == '__main__':
     api = NCMApi()
     # playlist_id = input("Playlist id: ")
